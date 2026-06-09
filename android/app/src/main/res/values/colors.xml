@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Night Blue palette -->
+    <color name="splash_bg">#0A0C13</color>
+    <color name="brand_primary">#4C5AA8</color>
+    <color name="brand_primary_light">#B8C9FF</color>
+    <color name="brand_accent">#DEE1FF</color>
+    <color name="brand_dark">#0E1118</color>
+    <color name="brand_container">#354190</color>
+</resources>

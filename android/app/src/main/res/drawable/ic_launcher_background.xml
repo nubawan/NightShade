@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- NightShade Launcher Icon Background -->
+<!-- Deep midnight gradient for Night Blue palette -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Gradient background -->
+    <path
+        android:fillColor="#0A0C13"
+        android:pathData="M0,0 L108,0 L108,108 L0,108 Z" />
+    <!-- Subtle gradient effect layer -->
+    <path
+        android:fillColor="#1B2A60"
+        android:fillAlpha="0.3"
+        android:pathData="M0,54 Q54,20 108,54 L108,108 L0,108 Z" />
+</vector>

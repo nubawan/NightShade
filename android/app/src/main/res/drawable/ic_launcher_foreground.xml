@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- NightShade Launcher Icon Foreground -->
+<!-- Design: Crescent moon overlapping a screen rectangle with filter overlay -->
+<!-- Night Blue palette -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Screen body -->
+    <path
+        android:fillColor="#E8E9F2"
+        android:pathData="M30,36 L78,36 L78,76 L30,76 Z" />
+    <!-- Screen inner (display area) -->
+    <path
+        android:fillColor="#DEE1FF"
+        android:pathData="M33,39 L75,39 L75,70 L33,70 Z" />
+    <!-- Filter overlay on screen (the key concept) -->
+    <path
+        android:fillColor="#4C5AA8"
+        android:fillAlpha="0.45"
+        android:pathData="M33,39 L75,39 L75,70 L33,70 Z" />
+
+    <!-- Crescent moon (overlapping top-right of screen) -->
+    <path
+        android:fillColor="#B8C9FF"
+        android:pathData="M68,26 C56,26 46,36 46,48 C46,60 56,70 68,70 C58,66 52,58 52,48 C52,38 58,30 68,26 Z" />
+
+    <!-- Shield / comfort indicator (small arc over screen) -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#B8C9FF"
+        android:strokeWidth="1.5"
+        android:pathData="M38,35 Q54,28 70,35" />
+</vector>

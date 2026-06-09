@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- NightShade V4 — Expanded Notification Layout -->
+<!-- Shows status text, brightness percentage, and visual indicator -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="12dp">
+
+    <!-- Status row -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/notification_status"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Active · 30% dim"
+            android:textColor="#E6E0E9"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/notification_brightness"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="30%"
+            android:textColor="#D0BCFF"
+            android:textSize="24sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- Brightness bar (visual indicator) -->
+    <ProgressBar
+        android:id="@+id/notification_progress"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="4dp"
+        android:layout_marginTop="8dp"
+        android:max="200"
+        android:progress="30"
+        android:progressTint="#D0BCFF"
+        android:progressBackgroundTint="#49454F" />
+
+    <!-- Quick brightness presets -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Quick: 25%  50%  75%  100%  150%"
+            android:textColor="#938F99"
+            android:textSize="11sp" />
+    </LinearLayout>
+
+</LinearLayout>

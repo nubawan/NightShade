@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Moon crescent -->
+    <path
+        android:fillColor="#FF9800"
+        android:pathData="M62,28 C50,28 40,38 40,50 C40,62 50,72 62,72 C52,68 46,60 46,50 C46,40 52,32 62,28 Z" />
+    <!-- Screen rectangle -->
+    <path
+        android:fillColor="#E0E0E0"
+        android:pathData="M35,42 L73,42 L73,74 L35,74 Z" />
+    <path
+        android:fillColor="#B3E5FC"
+        android:pathData="M37,44 L71,44 L71,70 L37,70 Z" />
+    <!-- Filter overlay on screen -->
+    <path
+        android:fillColor="#7C4DFF"
+        android:fillAlpha="0.4"
+        android:pathData="M37,44 L71,44 L71,70 L37,70 Z" />
+</vector>
