@@ -33,6 +33,7 @@ BUILT_IN_PRESETS.forEach((p, i) => {
   // Map old formats like "builtin_2" → current "ns_builtin_2_xxx"
   ID_MIGRATION[`builtin_${i}`] = p.id;
   ID_MIGRATION[`preset_builtin_${i}`] = p.id;
+  ID_MIGRATION[`preset-builtin_${i}`] = p.id;  // Old format with DASH (caused duplicate key warnings)
 });
 
 class StorageService {
