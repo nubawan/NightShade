@@ -1,10 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Night Blue palette -->
-    <color name="splash_bg">#0A0C13</color>
-    <color name="brand_primary">#4C5AA8</color>
-    <color name="brand_primary_light">#B8C9FF</color>
-    <color name="brand_accent">#DEE1FF</color>
-    <color name="brand_dark">#0E1118</color>
-    <color name="brand_container">#354190</color>
+    <!-- Void Architecture palette -->
+    <color name="void_black">#08090B</color>
+    <color name="void_deep">#0D0F14</color>
+    <color name="void_mid">#14171F</color>
+    <color name="void_rim">#1C2030</color>
+    <color name="void_ghost">#2A2E3E</color>
+    <color name="splash_bg">#08090B</color>
+    <color name="accent_amber">#E8A040</color>
+    <color name="accent_amber_dim">#A86820</color>
+    <color name="accent_ice">#5BB8D4</color>
+    <color name="text_primary">#F0F2F7</color>
+    <color name="status_on">#3DDC84</color>
+    <color name="danger">#E85540</color>
 </resources>

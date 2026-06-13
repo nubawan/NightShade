@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- NightShade Notification Status Bar Icon -->
+<!-- Simplified white silhouette — Android 5.0+ notification convention -->
+<!-- Must contain only #FFFFFF paths on transparent background -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Simplified aperture ring -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M12,3 A9,9 0 1,1 12,21 A9,9 0 1,1 12,3 Z" />
+    <!-- Inner void -->
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M12,7 A5,5 0 1,1 12,17 A5,5 0 1,1 12,7 Z" />
+    <!-- Aperture blade segments -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M12,7 C13.5,7 14.8,7.8 15.6,9 L12,12 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M15.6,9 C16.4,10.2 16.4,11.8 15.6,13 L12,12 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M15.6,13 C14.8,14.2 13.5,15 12,15 L12,12 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M12,15 C10.5,15 9.2,14.2 8.4,13 L12,12 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M8.4,13 C7.6,11.8 7.6,10.2 8.4,9 L12,12 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M8.4,9 C9.2,7.8 10.5,7 12,7 L12,12 Z" />
+    <!-- Center dot -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M12,10.5 C13,10.5 13.5,11 13.5,12 C13.5,13 13,13.5 12,13.5 C11,13.5 10.5,13 10.5,12 C10.5,11 11,10.5 12,10.5 Z" />
+</vector>
