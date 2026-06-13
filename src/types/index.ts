@@ -1,6 +1,6 @@
 /**
- * NightShade V5 — Type Definitions
- * Extended brightness (0–180%), enhanced filter system, accordion settings
+ * NightShade Revamp — Type Definitions
+ * Updated for Void Architecture, Cinema presets, Privacy filter
  */
 
 // ─── Overlay ──────────────────────────────────────────────────────
@@ -13,24 +13,17 @@ export interface OverlaySettings {
   presetId: string | null;
 }
 
-// ─── Filters ──────────────────────────────────────────────────────
-export interface FilterPreset {
-  id: string;
-  name: string;
-  /** 0.0–1.80 (safety capped) */
-  opacity: number;
-  color: string;
-  isBuiltIn?: boolean;
-  category?: FilterCategory;
-  description?: string;
-  createdAt: number;
-  lastUsedAt: number | null;
-}
+// ─── Preset Categories (Revamp) ───────────────────────────────────
+export type PresetCategory =
+  | 'Cinema'
+  | 'Clarity'
+  | 'Warm'
+  | 'Deep'
+  | 'Cool'
+  | 'Custom';
 
-/** Backward-compatible alias — older components import Preset */
-export type Preset = FilterPreset;
-
-export type FilterCategory =
+// Legacy category aliases (for migration from old lowercase values)
+export type LegacyFilterCategory =
   | 'warm'
   | 'cool'
   | 'neutral'
@@ -38,6 +31,30 @@ export type FilterCategory =
   | 'amoled'
   | 'red'
   | 'custom';
+
+// ─── Filter Preset (Revamp) ───────────────────────────────────────
+export interface FilterPreset {
+  id: string;
+  name: string;
+  /** 0.0–1.80 (safety capped) */
+  opacity: number;
+  color: string;            // hex, e.g. "#C45B1A"
+  category: PresetCategory | LegacyFilterCategory;
+  description: string;      // max 80 chars, required
+  isCinema?: boolean;       // true for the cinema/clarity categories
+  isBuiltIn?: boolean;
+  createdAt: number;
+  lastUsedAt: number | null;
+}
+
+/** Backward-compatible alias — older components import Preset */
+export type Preset = FilterPreset;
+
+// Legacy FilterCategory export for backward compat
+export type FilterCategory = PresetCategory | LegacyFilterCategory;
+
+// ─── Privacy Filter ───────────────────────────────────────────────
+export type PrivacyDensity = 'subtle' | 'standard' | 'strong';
 
 // ─── Theme ────────────────────────────────────────────────────────
 export type AppTheme = 'light' | 'dark' | 'system';
@@ -67,4 +84,7 @@ export enum StorageKeys {
   BUBBLE_AUTO_HIDE      = 'ns_bubble_auto_hide',
   BUBBLE_ENABLED        = 'ns_bubble_enabled',
   QUICK_TILE_ENABLED    = 'ns_quick_tile_enabled',
+  PRIVACY_FILTER_ENABLED = 'ns_privacy_filter_enabled',
+  PRIVACY_DENSITY        = 'ns_privacy_density',
+  PRIVACY_WALL_OPACITY   = 'ns_privacy_wall_opacity',
 }

@@ -1,5 +1,6 @@
 /**
- * NightShade V4 — Utility Helpers
+ * NightShade Revamp — Utility Helpers
+ * Void Architecture design system utilities + legacy compat
  */
 
 import { Linking } from 'react-native';
@@ -13,6 +14,11 @@ export const requestPermission = async () => {
 };
 export const openBattery = () => { try { overlayService.openBatterySettings(); } catch { Linking.openSettings(); } };
 
+// Legacy aliases for old components
+export const checkOverlayPermission = checkPermission;
+export const requestOverlayPermission = requestPermission;
+export const openBatterySettings = openBattery;
+
 // ─── ID / Formatting ─────────────────────────────────────────────
 export const genId = () => `f_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
@@ -21,6 +27,11 @@ export const genId = () => `f_${Date.now()}_${Math.random().toString(36).slice(2
  * 1.0 = 100%, 2.0 = 200%
  */
 export const pctStr = (o: number) => `${Math.round(o * 100)}%`;
+
+/**
+ * Legacy: Convert opacity to percent number.
+ */
+export const opacityToPercent = (o: number) => Math.round(o * 100);
 
 /** Get brightness mode label from opacity value */
 export const getBrightnessMode = (o: number): BrightnessMode => {
@@ -45,7 +56,26 @@ export const getBrightnessLabel = (o: number): string => {
   return 'AMOLED Dark';
 };
 
+/**
+ * Revamp: Two-word opacity description for labels.
+ * 0.10 → "Subtle Tint", 0.55 → "Strong Dim"
+ */
+export const opacityToLabel = (o: number): string => {
+  if (o <= 0) return 'Off';
+  if (o <= 0.10) return 'Subtle Tint';
+  if (o <= 0.20) return 'Light Tint';
+  if (o <= 0.35) return 'Moderate Dim';
+  if (o <= 0.50) return 'Standard Dim';
+  if (o <= 0.65) return 'Strong Dim';
+  if (o <= 0.80) return 'Deep Dim';
+  if (o <= 1.0) return 'Maximum Dim';
+  if (o <= 1.30) return 'Extended Dim';
+  if (o <= 1.60) return 'Ultra Dim';
+  return 'Extreme Dim';
+};
+
 // ─── Color Conversions ────────────────────────────────────────────
+
 export const hexToRgb = (hex: string) => {
   const c = hex.replace('#', '');
   const full = c.length === 3 ? c.split('').map(x => x + x).join('') : c;
@@ -83,9 +113,35 @@ export const colorLabel = (hex: string): string => {
     '#FF8A65': 'Deep Orange', '#FFCC80': 'Gold', '#D32F2F': 'Red',
     '#B71C1C': 'Dark Red', '#90CAF9': 'Blue', '#1A1A2E': 'Navy',
     '#3E2723': 'Brown', '#1A237E': 'Indigo', '#0D1B2A': 'Midnight',
+    '#C45B1A': 'Orange Teal', '#050B18': 'Cine Black',
+    '#0A1428': 'Anamorphic', '#D4A855': 'Kodak', '#C45000': 'Amber',
+    '#0F0F12': 'Noir', '#1A2840': '4K Ref', '#12182E': '8K HDR',
+    '#C8E8FF': 'Arctic', '#FF6A40': 'Sleep', '#FFB03A': 'Golden Hour',
+    '#C8903A': 'Tobacco', '#0A0505': 'Midnight Oil', '#1A0000': 'Observatory',
+    '#5BB8D4': 'Ice Blue',
   };
   return m[hex.toUpperCase()] || m[hex.toLowerCase()] || 'Custom';
 };
+
+// Legacy alias
+export const getColorName = colorLabel;
+
+// ─── Live Canvas Blending ─────────────────────────────────────────
+
+/**
+ * Blends a filter color at a given opacity over #08090B (void-black).
+ * Returns the resulting hex color for use as the Live Canvas background.
+ * Clamps opacity to 0.0–0.60 for the UI background (even if filter is higher).
+ */
+export function blendFilterOverBlack(filterHex: string, filterOpacity: number): string {
+  const clampedOp = Math.min(filterOpacity, 0.60);
+  const base = { r: 8, g: 9, b: 11 }; // #08090B
+  const filter = hexToRgb(filterHex);
+  const r = Math.round(base.r * (1 - clampedOp) + filter.r * clampedOp);
+  const g = Math.round(base.g * (1 - clampedOp) + filter.g * clampedOp);
+  const b = Math.round(base.b * (1 - clampedOp) + filter.b * clampedOp);
+  return rgbToHex(r, g, b);
+}
 
 // ─── Debounce ─────────────────────────────────────────────────────
 export const debounce = <T extends (...a: any[]) => any>(fn: T, ms: number) => {

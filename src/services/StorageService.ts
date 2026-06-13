@@ -20,8 +20,9 @@ const BUILT_IN_PRESETS: FilterPreset[] = FILTER_PRESETS.map((p, i) => ({
   opacity: p.opacity,
   color: p.color,
   isBuiltIn: true,
-  category: p.category,
+  category: p.category as FilterPreset['category'],
   description: p.description,
+  isCinema: p.isCinema,
   createdAt: Date.now(),
   lastUsedAt: null,
 }));

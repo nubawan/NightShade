@@ -1,58 +1,56 @@
-// App color palette - dark theme optimized for screen filter app
+/**
+ * NightShade Revamp — Colors
+ * DEPRECATED: Use tokens from theme/index.ts instead.
+ * This file re-exports the Void Architecture tokens for backward compat.
+ */
+
+import { colors } from './index';
+
+// Redirect all old Colors references to the new Void token system
 export const Colors = {
-  // Primary
-  primary: '#6C63FF',
-  primaryDark: '#4A42D4',
-  primaryLight: '#8B83FF',
+  primary: colors.accentAmber,
+  primaryDark: colors.accentAmberDim,
+  primaryLight: colors.accentAmber,
 
-  // Backgrounds
-  background: '#0D0D0D',
-  backgroundSecondary: '#1A1A1A',
-  backgroundCard: '#242424',
-  backgroundElevated: '#2D2D2D',
+  background: colors.voidBlack,
+  backgroundSecondary: colors.voidDeep,
+  backgroundCard: colors.voidMid,
+  backgroundElevated: colors.voidRim,
 
-  // Text
-  textPrimary: '#FFFFFF',
-  textSecondary: '#B0B0B0',
-  textTertiary: '#707070',
+  textPrimary: colors.textPrimary,
+  textSecondary: colors.textSecondary,
+  textTertiary: colors.textMuted,
 
-  // Overlay filter colors
   filterBlack: '#000000',
-  filterWarm: '#FF9800',
-  filterRed: '#F44336',
-  filterBlue: '#2196F3',
-  filterGreen: '#4CAF50',
-  filterCustom: '#6C63FF',
+  filterWarm: colors.accentAmber,
+  filterRed: colors.danger,
+  filterBlue: colors.accentIce,
+  filterGreen: colors.statusOn,
+  filterCustom: colors.accentAmber,
 
-  // Status
-  success: '#4CAF50',
-  warning: '#FF9800',
-  error: '#F44336',
-  info: '#2196F3',
+  success: colors.statusOn,
+  warning: colors.accentAmber,
+  error: colors.danger,
+  info: colors.accentIce,
 
-  // Toggle
-  toggleActive: '#6C63FF',
-  toggleInactive: '#3D3D3D',
+  toggleActive: colors.accentAmber,
+  toggleInactive: colors.voidGhost,
 
-  // Slider
-  sliderTrack: '#3D3D3D',
-  sliderThumb: '#6C63FF',
+  sliderTrack: colors.voidRim,
+  sliderThumb: colors.accentAmber,
 
-  // Borders
-  border: '#3D3D3D',
-  borderLight: '#2D2D2D',
+  border: colors.voidRim,
+  borderLight: colors.voidMid,
 
-  // Opacity levels for UI
   disabled: 0.4,
   overlay: 0.8,
 };
 
-// Color mode definitions
 export const ColorModes = [
-  { name: 'Black', color: '#000000', label: 'Dim' },
-  { name: 'Warm', color: '#FF9800', label: 'Warm' },
-  { name: 'Red', color: '#F44336', label: 'Red' },
-  { name: 'Blue', color: '#2196F3', label: 'Blue' },
-  { name: 'Green', color: '#4CAF50', label: 'Green' },
-  { name: 'Custom', color: '#6C63FF', label: 'Custom' },
+  { name: 'Black',   color: '#000000', label: 'Dim' },
+  { name: 'Warm',    color: colors.accentAmber, label: 'Warm' },
+  { name: 'Red',     color: colors.danger,  label: 'Red' },
+  { name: 'Cool',    color: colors.accentIce, label: 'Cool' },
+  { name: 'Cinema',  color: '#C45B1A', label: 'Cinema' },
+  { name: 'Custom',  color: colors.accentAmber, label: 'Custom' },
 ] as const;
