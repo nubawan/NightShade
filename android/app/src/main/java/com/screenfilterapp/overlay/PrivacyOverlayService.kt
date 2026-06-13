@@ -47,7 +47,7 @@ class PrivacyOverlayService(private val context: Context) {
                 canvas.drawPaint(paint)
             }
         }.apply {
-            setLayerType(LAYER_TYPE_HARDWARE, null)
+            setLayerType(View.LAYER_TYPE_HARDWARE, null)
         }
     }
 
