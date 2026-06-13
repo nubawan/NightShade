@@ -85,6 +85,8 @@ class OverlayService : Service() {
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         createNotificationChannel()
         registerBrightnessReceiver()
+        // Call startForeground in onCreate to prevent ForegroundServiceDidNotStartInTimeException
+        startForeground(NOTIFICATION_ID, createNotification())
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -396,7 +398,7 @@ class OverlayService : Service() {
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
-                CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_LOW
+                CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_HIGH  // HIGH to prevent Samsung notification suppression → FGS crash
             ).apply {
                 description = "NightShade screen filter is active"
                 setShowBadge(false)
