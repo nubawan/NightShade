@@ -1,7 +1,7 @@
 package com.screenfilterapp.overlay
 
 import android.annotation.SuppressLint
-import android.app.*
+import android.app.Service
 import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.PixelFormat
@@ -14,9 +14,7 @@ import android.view.*
 import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.TextView
-import androidx.core.app.NotificationCompat
 import com.screenfilterapp.MainActivity
-import com.screenfilterapp.R
 
 /**
  * NightShade V5 — Floating Bubble Service
@@ -37,8 +35,6 @@ class FloatingBubbleService : Service() {
         const val ACTION_SHOW = "com.screenfilterapp.BUBBLE_SHOW"
         const val ACTION_HIDE = "com.screenfilterapp.BUBBLE_HIDE"
         const val ACTION_RESTORE = "com.screenfilterapp.BUBBLE_RESTORE"
-        const val BUBBLE_CHANNEL_ID = "nightshade_bubble_channel"
-        const val BUBBLE_NOTIFICATION_ID = 1002
         var isRunning = false
             private set
     }
@@ -71,21 +67,9 @@ class FloatingBubbleService : Service() {
     override fun onCreate() {
         super.onCreate()
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
-        createBubbleNotificationChannel()
-        // CRITICAL FIX: Must call startForeground() IMMEDIATELY in onCreate()
-        // This prevents ForegroundServiceDidNotStartInTimeException crash
-        val notification = buildBubbleNotification("Night filter bubble active")
-        startForeground(BUBBLE_NOTIFICATION_ID, notification)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        // Safety net: also call startForeground here in case onCreate didn't run
-        // (e.g. service restart after crash)
-        try {
-            val notification = buildBubbleNotification("Night filter bubble active")
-            startForeground(BUBBLE_NOTIFICATION_ID, notification)
-        } catch (_: Exception) {}
-
         when (intent?.action) {
             ACTION_SHOW -> {
                 prefs.edit().putBoolean("bubble_enabled", true).apply()
@@ -460,36 +444,5 @@ class FloatingBubbleService : Service() {
     private fun resetAutoHide() {
         autoHideHandler.removeCallbacksAndMessages(null)
         autoHideHandler.postDelayed({ safeRemoveMiniPanel() }, AUTO_HIDE_DELAY)
-    }
-
-    // ─── Foreground Service Notification (CRASH FIX) ─────────────
-    // Without startForeground(), Android kills the app with
-    // ForegroundServiceDidNotStartInTimeException
-
-    private fun createBubbleNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                BUBBLE_CHANNEL_ID,
-                "Night Filter Bubble",
-                NotificationManager.IMPORTANCE_HIGH  // HIGH to prevent Samsung suppression
-            ).apply {
-                description = "Floating bubble control for NightShade"
-                setShowBadge(false)
-                lockscreenVisibility = Notification.VISIBILITY_PUBLIC
-            }
-            getSystemService(NotificationManager::class.java)
-                .createNotificationChannel(channel)
-        }
-    }
-
-    private fun buildBubbleNotification(text: String): Notification {
-        return NotificationCompat.Builder(this, BUBBLE_CHANNEL_ID)
-            .setContentTitle("NightShade")
-            .setContentText(text)
-            .setSmallIcon(R.drawable.ic_notification)
-            .setOngoing(true)
-            .setSilent(true)
-            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .build()
     }
 }
