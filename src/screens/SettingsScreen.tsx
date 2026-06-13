@@ -7,13 +7,21 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import Slider from '@react-native-community/slider';
 import { Card, Switch, AccordionSection } from '../components/AppComponents';
-import { S, T, R } from '../theme';
+import { S, T, R, colors } from '../theme';
 import { useAppTheme } from '../context/ThemeContext';
-import { AppTheme, SettingsSection } from '../types';
+import { AppTheme, SettingsSection, PrivacyDensity } from '../types';
 import { storageService } from '../services/StorageService';
 import { overlayService } from '../services/OverlayService';
+import { PrivacyFilterService } from '../services/PrivacyFilterService';
 import { openBattery } from '../utils/helpers';
+
+const DENSITY_OPTIONS: { value: PrivacyDensity; label: string }[] = [
+  { value: 'subtle', label: 'Subtle' },
+  { value: 'standard', label: 'Standard' },
+  { value: 'strong', label: 'Strong' },
+];
 
 const SettingsScreen: React.FC = () => {
   const { palette, theme, setTheme, isDark } = useAppTheme();
@@ -32,12 +40,22 @@ const SettingsScreen: React.FC = () => {
   const [notifControls, setNotifControls] = useState(true);
   const [floatingBubble, setFloatingBubble] = useState(false);
 
+  // Privacy state
+  const [privacyEnabled, setPrivacyEnabled] = useState(false);
+  const [privacyDensity, setPrivacyDensity] = useState<PrivacyDensity>('standard');
+  const [privacyWallOpacity, setPrivacyWallOpacity] = useState(0.75);
+
   useEffect(() => {
     (async () => {
       setAutoStart(await storageService.getAutoStart());
       setRestoreFilter(await storageService.getRestoreFilter());
       setNotifControls(await storageService.getNotificationControls());
       setFloatingBubble(await storageService.getFloatingWidget());
+
+      // Load privacy settings
+      setPrivacyEnabled(await storageService.getPrivacyFilterEnabled());
+      setPrivacyDensity((await storageService.getPrivacyDensity()) as PrivacyDensity);
+      setPrivacyWallOpacity(await storageService.getPrivacyWallOpacity());
     })();
   }, []);
 
@@ -47,6 +65,34 @@ const SettingsScreen: React.FC = () => {
     await storageService.setBubbleEnabled(v);
     try { if (v) await overlayService.showBubble(); else await overlayService.hideBubble(); } catch {}
   }, []);
+
+  const handlePrivacyToggle = useCallback(async (v: boolean) => {
+    setPrivacyEnabled(v);
+    await storageService.setPrivacyFilterEnabled(v);
+    try {
+      if (v) {
+        await PrivacyFilterService.start(privacyDensity, privacyWallOpacity);
+      } else {
+        await PrivacyFilterService.stop();
+      }
+    } catch {}
+  }, [privacyDensity, privacyWallOpacity]);
+
+  const handlePrivacyDensity = useCallback(async (d: PrivacyDensity) => {
+    setPrivacyDensity(d);
+    await storageService.setPrivacyDensity(d);
+    if (privacyEnabled) {
+      try { await PrivacyFilterService.start(d, privacyWallOpacity); } catch {}
+    }
+  }, [privacyEnabled, privacyWallOpacity]);
+
+  const handlePrivacyOpacity = useCallback(async (o: number) => {
+    setPrivacyWallOpacity(o);
+    await storageService.setPrivacyWallOpacity(o);
+    if (privacyEnabled) {
+      try { await PrivacyFilterService.start(privacyDensity, o); } catch {}
+    }
+  }, [privacyEnabled, privacyDensity]);
 
   const showBatteryGuide = (mfr: string) => {
     const guides: Record<string, string> = {
@@ -131,6 +177,79 @@ const SettingsScreen: React.FC = () => {
           Show brightness slider and filter toggle in the persistent notification.
         </Text>
       </AccordionSection>
+
+      {/* ─── Privacy ─────────────────────────────────────────── */}
+      <AccordionSection
+        title="Privacy"
+        icon="shield-lock-outline"
+        expanded={expanded === 'privacy'}
+        onToggle={() => toggleSection('privacy')}
+      >
+        <Switch value={privacyEnabled} onValueChange={handlePrivacyToggle} label="Privacy Filter" accessibilityLabel="Privacy filter toggle" />
+        <Text style={{ ...T.bodyS, color: palette.onSurfaceVariant, marginLeft: 0, marginBottom: S.s3 }}>
+          Reduces side-angle screen visibility using optical micro-louver simulation.
+        </Text>
+
+        <View style={{ height: 1, backgroundColor: palette.outlineVariant, marginVertical: S.s2 }} />
+
+        <Text style={{ ...T.labelM, color: palette.onSurfaceVariant, fontWeight: '600', marginBottom: S.s2, marginTop: S.s1 }}>
+          Density
+        </Text>
+        <View style={ss.densityRow}>
+          {DENSITY_OPTIONS.map(opt => {
+            const isActive = privacyDensity === opt.value;
+            return (
+              <TouchableOpacity
+                key={opt.value}
+                style={[
+                  ss.densityPill,
+                  {
+                    backgroundColor: isActive ? colors.accentAmber : palette.surfaceContainerHigh,
+                    borderColor: isActive ? colors.accentAmber : palette.outlineVariant,
+                  },
+                ]}
+                onPress={() => handlePrivacyDensity(opt.value)}
+                accessibilityRole="radio"
+                accessibilityState={{ checked: isActive }}
+              >
+                <Text style={{
+                  ...T.labelM,
+                  color: isActive ? colors.voidBlack : palette.onSurfaceVariant,
+                  fontWeight: isActive ? '700' : '500',
+                }}>
+                  {opt.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        <View style={{ height: 1, backgroundColor: palette.outlineVariant, marginVertical: S.s3 }} />
+
+        <View style={ss.opacityHeader}>
+          <Text style={{ ...T.labelM, color: palette.onSurfaceVariant, fontWeight: '600' }}>Wall Opacity</Text>
+          <Text style={{ ...T.bodyM, color: palette.onSurface, fontWeight: '600' }}>{Math.round(privacyWallOpacity * 100)}%</Text>
+        </View>
+        <View style={ss.sliderRow}>
+          <Slider
+            style={ss.slider}
+            minimumValue={0.40}
+            maximumValue={0.90}
+            step={0.05}
+            value={privacyWallOpacity}
+            onValueChange={handlePrivacyOpacity}
+            minimumTrackTintColor={colors.accentAmber}
+            maximumTrackTintColor={palette.outlineVariant}
+            thumbTintColor={colors.accentAmber}
+            accessibilityLabel="Wall opacity"
+          />
+        </View>
+      </AccordionSection>
+
+      {/* Privacy disclaimer — outside accordion */}
+      <Text style={{ ...T.bodyS, color: colors.textMuted, marginTop: S.s1, marginBottom: S.s2, paddingHorizontal: S.s2 }}>
+        Software approximation only. Effect varies with ambient lighting and distance.
+      </Text>
 
       {/* ─── Startup ─────────────────────────────────────────────── */}
       <AccordionSection
@@ -231,6 +350,15 @@ const ss = StyleSheet.create({
   battBtn: { flexDirection: 'row', borderRadius: R.md, paddingVertical: S.s3, alignItems: 'center', borderWidth: 1, minHeight: S.s12, justifyContent: 'center', marginTop: S.s3 },
   aboutHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: S.s3 },
   aboutRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: S.s3 },
+  densityRow: { flexDirection: 'row', gap: S.s2, marginBottom: S.s2 },
+  densityPill: {
+    flex: 1, paddingVertical: S.s2, paddingHorizontal: S.s3,
+    borderRadius: R.radiusPill, borderWidth: 1,
+    alignItems: 'center', justifyContent: 'center', minHeight: S.s10,
+  },
+  opacityHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: S.s1 },
+  sliderRow: { flexDirection: 'row', alignItems: 'center' },
+  slider: { flex: 1, height: S.s12 },
 });
 
 export default SettingsScreen;

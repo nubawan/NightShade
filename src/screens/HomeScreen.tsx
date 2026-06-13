@@ -1,20 +1,29 @@
 /**
- * NightShade V5 — Home Screen
- * Uses OverlayStateStore as single source of truth.
- * State changes from bubble/notification/tile propagate here automatically.
+ * NightShade Revamp — Home Screen (Module C)
+ * C1: Live Canvas Background — filter color + opacity blended over void-black
+ * C2: Command Strip (Zone 1) — top ~40%, big percentage, status, toggle, stop
+ * C3: Controls Zone (Zone 2) — bottom ~60%, brightness, filter strip, presets, quick actions
  */
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Animated } from 'react-native';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  StyleSheet,
+  Animated,
+  Alert,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Slider from '@react-native-community/slider';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { Card, Switch, BrightnessCard, PresetChip } from '../components/AppComponents';
-import { S, T, R, QUICK_COLORS } from '../theme';
+import { S, T, R, colors, QUICK_COLORS, E, ANIM } from '../theme';
 import { useAppTheme } from '../context/ThemeContext';
 import { FilterPreset } from '../types';
 import { overlayStore } from '../services/OverlayStateStore';
 import { storageService } from '../services/StorageService';
-import { pctStr, debounce, colorLabel, getBrightnessLabel } from '../utils/helpers';
+import { pctStr, debounce, blendFilterOverBlack } from '../utils/helpers';
 
 interface Props {
   onCreateFilter: () => void;
@@ -34,9 +43,7 @@ const HomeScreen: React.FC<Props> = ({ onCreateFilter, onColorPicker }) => {
     const unsubscribe = overlayStore.subscribe((state) => {
       setSettings(state);
     });
-    // Initial sync from native
     overlayStore.syncFromNative().then(() => setLoading(false));
-    // Load presets
     storageService.getPresets().then(setPresets);
     return unsubscribe;
   }, []);
@@ -59,8 +66,16 @@ const HomeScreen: React.FC<Props> = ({ onCreateFilter, onColorPicker }) => {
 
   const toggle = useCallback(async () => {
     Animated.sequence([
-      Animated.timing(heroScale, { toValue: 0.97, duration: 80, useNativeDriver: true }),
-      Animated.spring(heroScale, { toValue: 1, damping: 0.6, useNativeDriver: true }),
+      Animated.timing(heroScale, {
+        toValue: 0.97,
+        duration: ANIM.fast * 0.5,
+        useNativeDriver: true,
+      }),
+      Animated.spring(heroScale, {
+        toValue: 1,
+        damping: 0.6,
+        useNativeDriver: true,
+      }),
     ]).start();
     await overlayStore.toggle();
     save();
@@ -86,164 +101,488 @@ const HomeScreen: React.FC<Props> = ({ onCreateFilter, onColorPicker }) => {
     save();
   }, [save]);
 
-  if (loading) return <View style={[styles.root, { backgroundColor: palette.background }]} />;
+  // ─── C1: Live Canvas computation ────────────────────────────────
+  const canvasBg = useMemo(
+    () => settings.enabled
+      ? blendFilterOverBlack(settings.color, settings.opacity)
+      : colors.voidBlack,
+    [settings.color, settings.opacity, settings.enabled],
+  );
 
+  // ─── Derived values ─────────────────────────────────────────────
   const activePreset = presets.find(p => p.id === settings.presetId);
+  const percentageNum = Math.round(settings.opacity * 100);
+
+  // Quick action preset lookups
+  const nightReadingPreset = presets.find(p => p.name === 'Night Reading');
+  const sleepPreset = presets.find(p => p.name === 'Sleep Mode');
+
+  if (loading) {
+    return <View style={[styles.root, { backgroundColor: colors.voidBlack }]} />;
+  }
 
   return (
-    <ScrollView
-      style={[styles.root, { backgroundColor: palette.background }]}
-      contentContainerStyle={{
-        paddingTop: insets.top + S.s4,
-        paddingBottom: insets.bottom + S.s8 + S.s16,
-        paddingHorizontal: S.s4,
-      }}
-      showsVerticalScrollIndicator={false}
-    >
-      {/* Hero Toggle Card */}
-      <Animated.View style={{ transform: [{ scale: heroScale }] }}>
-        <Card style={{
-          backgroundColor: settings.enabled ? palette.primaryContainer : palette.surfaceContainer,
-        }}>
-          <View style={styles.heroRow}>
-            <View style={styles.heroInfo}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: S.s2 }}>
-                <Icon
-                  name={settings.enabled ? 'moon-waning-crescent' : 'weather-sunny'}
-                  size={28}
-                  color={settings.enabled ? palette.primary : palette.onSurfaceVariant}
-                />
-                <Text style={{
-                  ...T.headline,
-                  color: settings.enabled ? palette.onPrimaryContainer : palette.onSurface,
-                  fontWeight: '700',
-                }}>
-                  NightShade
-                </Text>
-              </View>
-              <Text style={{
-                ...T.bodyM,
-                color: settings.enabled ? palette.primary : palette.onSurfaceVariant,
-                marginTop: S.s1,
-                marginLeft: S.s8,
-              }}>
-                {settings.enabled ? 'Active' : 'Inactive'}{activePreset ? ` · ${activePreset.name}` : ''}
-              </Text>
-            </View>
-            <Switch value={settings.enabled} onValueChange={toggle} accessibilityLabel="Toggle filter" />
-          </View>
+    <View style={styles.root}>
+      {/* ─── C1: Live Canvas Background ─────────────────────────── */}
+      <View style={[styles.liveCanvas, { backgroundColor: canvasBg }]} />
 
-          {settings.enabled && (
-            <View style={[styles.heroDetails, { borderTopColor: palette.outlineVariant }]}>
-              <View style={styles.detailItem}>
-                <Text style={{ ...T.labelS, color: palette.onSurfaceVariant }}>Dim Level</Text>
-                <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: S.s1 }}>
-                  <Text style={{ ...T.titleM, color: palette.onSurface, fontWeight: '600' }}>
-                    {pctStr(settings.opacity)}
-                  </Text>
-                  <Text style={{ ...T.labelS, color: palette.primary }}>
-                    {getBrightnessLabel(settings.opacity)}
-                  </Text>
-                </View>
-              </View>
-              <View style={[styles.detailDiv, { backgroundColor: palette.outlineVariant }]} />
-              <View style={styles.detailItem}>
-                <Text style={{ ...T.labelS, color: palette.onSurfaceVariant }}>Filter</Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: S.s1 }}>
-                  <View style={{
-                    width: 12, height: 12, borderRadius: 6,
-                    backgroundColor: settings.color,
-                    borderWidth: 1, borderColor: palette.outline,
-                  }} />
-                  <Text style={{ ...T.titleM, color: palette.onSurface, fontWeight: '600' }}>
-                    {colorLabel(settings.color)}
-                  </Text>
-                </View>
-              </View>
-            </View>
-          )}
-        </Card>
-      </Animated.View>
-
-      {/* Brightness Card */}
-      <View style={{ marginTop: S.s3 }}>
-        <BrightnessCard opacity={settings.opacity} onValueChange={onOpacity} onSlidingComplete={onOpacityDone} />
-      </View>
-
-      {/* Color Quick Select */}
-      <Card style={{ marginTop: S.s3 }}>
-        <View style={styles.colorHeader}>
-          <Icon name="palette" size={18} color={palette.primary} />
-          <Text style={{ ...T.titleM, color: palette.onSurface, fontWeight: '600', marginLeft: S.s1 }}>Filter Color</Text>
-        </View>
-        <View style={styles.colorRow}>
-          {QUICK_COLORS.map(qc => (
-            <TouchableOpacity
-              key={`qc-${qc.color}-${qc.label}`}
-              style={[
-                styles.colorBtn,
-                {
-                  backgroundColor: qc.color,
-                  borderColor: settings.color === qc.color ? palette.primary : 'transparent',
-                  borderWidth: 2,
-                },
-              ]}
-              onPress={() => selectColor(qc.color)}
-              accessibilityLabel={`${qc.label} filter`}
-              accessibilityRole="button"
-            >
-              <Text style={{
-                ...T.labelS,
-                color: ['#000000', '#1A1A1A', '#0D1B2A', '#1A1A2E', '#3E2723'].includes(qc.color) ? '#FFF' : '#000',
-                fontWeight: '600',
-              }}>
-                {qc.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
+      {/* ─── C2: Command Strip — Zone 1 (Top ~40%) ──────────────── */}
+      <View style={[styles.zone1, { paddingTop: insets.top + S.s4 }]}>
+        {/* Top Row: Brand + Circle Toggle */}
+        <View style={styles.zone1TopRow}>
+          <Text style={styles.brandLabel}>NIGHTSHADE</Text>
           <TouchableOpacity
-            key="qc-custom"
-            style={[styles.colorBtn, { backgroundColor: palette.surfaceContainerHigh, borderColor: palette.outlineVariant, borderWidth: 1 }]}
-            onPress={onColorPicker}
-            accessibilityLabel="Custom color"
+            onPress={toggle}
+            style={[
+              styles.circleToggle,
+              settings.enabled && styles.circleToggleActive,
+            ]}
+            activeOpacity={0.7}
+            accessibilityLabel="Toggle filter"
+            accessibilityRole="switch"
+            accessibilityState={{ checked: settings.enabled }}
           >
-            <Icon name="eyedropper" size={16} color={palette.primary} />
-            <Text style={{ ...T.labelS, color: palette.primary, fontWeight: '600', marginLeft: 2 }}>Custom</Text>
+            <Icon
+              name={settings.enabled ? 'moon-waning-crescent' : 'weather-sunny'}
+              size={22}
+              color={settings.enabled ? colors.accentAmber : colors.textSecondary}
+            />
           </TouchableOpacity>
         </View>
-      </Card>
 
-      {/* Quick Presets */}
-      <View style={{ marginTop: S.s6 }}>
-        <View style={styles.presetsHeader}>
-          <Text style={{ ...T.titleM, color: palette.onSurface, fontWeight: '600' }}>Quick Presets</Text>
+        {/* Big Percentage Display */}
+        <View style={styles.percentageRow}>
+          <Animated.Text
+            style={[styles.percentageNum, { transform: [{ scale: heroScale }] }]}
+          >
+            {percentageNum}
+          </Animated.Text>
+          <Text style={styles.percentageSymbol}>%</Text>
         </View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: S.s2, paddingBottom: S.s2 }}>
-          {presets.slice(0, 8).map(p => (
-            <PresetChip key={`preset-${p.id}`} name={p.name} color={p.color} active={settings.presetId === p.id} onPress={() => applyPreset(p)} />
-          ))}
-        </ScrollView>
+
+        {/* Status Label */}
+        <Text
+          style={[
+            styles.statusLabel,
+            { color: settings.enabled ? colors.statusOn : colors.statusOff },
+          ]}
+        >
+          {settings.enabled ? 'FILTER ACTIVE' : 'FILTER OFF'}
+        </Text>
+
+        {/* Preset / Filter Info */}
+        <Text style={styles.presetInfo} numberOfLines={1}>
+          {activePreset
+            ? `${activePreset.category} \u00B7 ${activePreset.name}`
+            : settings.enabled
+              ? 'Custom Filter'
+              : 'No filter applied'}
+        </Text>
+
+        {/* STOP Button — only visible when filter is active */}
+        {settings.enabled && (
+          <TouchableOpacity
+            style={[styles.stopButton, E.elevation1]}
+            onPress={toggle}
+            activeOpacity={0.8}
+            accessibilityLabel="Stop filter"
+            accessibilityRole="button"
+          >
+            <Text style={styles.stopButtonText}>STOP</Text>
+          </TouchableOpacity>
+        )}
       </View>
-    </ScrollView>
+
+      {/* ─── C3: Controls Zone — Zone 2 (Bottom ~60%) ───────────── */}
+      <ScrollView
+        style={styles.zone2}
+        contentContainerStyle={[
+          styles.zone2Content,
+          { paddingBottom: insets.bottom + S.s8 },
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* ── 1. Brightness Control ─────────────────────────────── */}
+        <View style={styles.brightnessSection}>
+          <View style={styles.brightnessHeader}>
+            <Text style={styles.brightnessLabel}>DIM LEVEL</Text>
+            <Text style={styles.brightnessValue}>{pctStr(settings.opacity)}</Text>
+          </View>
+          <Slider
+            style={styles.slider}
+            minimumValue={0}
+            maximumValue={1.80}
+            step={0.01}
+            value={settings.opacity}
+            onValueChange={onOpacity}
+            onSlidingComplete={onOpacityDone}
+            minimumTrackTintColor={colors.accentAmber}
+            maximumTrackTintColor={colors.voidRim}
+            thumbTintColor={colors.accentAmber}
+            accessibilityLabel="Dim level"
+          />
+          <View style={styles.sliderTicks}>
+            <Text style={styles.tickLabel}>0%</Text>
+            <Text style={styles.tickLabel}>100%</Text>
+            <Text style={styles.tickLabel}>180%</Text>
+          </View>
+        </View>
+
+        {/* ── 2. Filter Strip ───────────────────────────────────── */}
+        <View style={styles.filterSection}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.filterStripContent}
+          >
+            {QUICK_COLORS.map(qc => (
+              <TouchableOpacity
+                key={`fc-${qc.color}-${qc.label}`}
+                style={[
+                  styles.colorChip,
+                  { backgroundColor: qc.color },
+                  settings.color === qc.color && styles.colorChipSelected,
+                ]}
+                onPress={() => selectColor(qc.color)}
+                onLongPress={() =>
+                  Alert.alert(qc.label, `Color: ${qc.color}\nCategory: ${qc.category}`)
+                }
+                accessibilityLabel={`${qc.label} filter color`}
+                accessibilityRole="button"
+              />
+            ))}
+            {/* Custom color "+" button */}
+            <TouchableOpacity
+              style={styles.colorChipAdd}
+              onPress={onColorPicker}
+              accessibilityLabel="Custom color"
+              accessibilityRole="button"
+            >
+              <Icon name="plus" size={24} color={colors.textSecondary} />
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
+
+        {/* ── 3. Presets Row ────────────────────────────────────── */}
+        <View style={styles.presetsSection}>
+          <Text style={styles.sectionLabel}>PRESETS</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.presetsStripContent}
+          >
+            {presets.slice(0, 12).map(p => (
+              <TouchableOpacity
+                key={`preset-${p.id}`}
+                style={[
+                  styles.presetCard,
+                  settings.presetId === p.id && styles.presetCardActive,
+                ]}
+                onPress={() => applyPreset(p)}
+                accessibilityLabel={`${p.name} preset`}
+                accessibilityRole="button"
+              >
+                <View style={[styles.presetSwatch, { backgroundColor: p.color }]} />
+                <Text style={styles.presetName} numberOfLines={1}>{p.name}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+
+        {/* ── 4. Quick Actions Row ──────────────────────────────── */}
+        <View style={styles.quickActionsSection}>
+          <View style={styles.quickActionsRow}>
+            <TouchableOpacity
+              style={styles.quickActionPill}
+              onPress={() => nightReadingPreset && applyPreset(nightReadingPreset)}
+              activeOpacity={0.7}
+              accessibilityLabel="Night Reading preset"
+              accessibilityRole="button"
+            >
+              <Text style={styles.quickActionText}>Night Reading</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.quickActionPill}
+              onPress={() => sleepPreset && applyPreset(sleepPreset)}
+              activeOpacity={0.7}
+              accessibilityLabel="Sleep preset"
+              accessibilityRole="button"
+            >
+              <Text style={styles.quickActionText}>Sleep</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.quickActionPill}
+              onPress={onCreateFilter}
+              activeOpacity={0.7}
+              accessibilityLabel="Custom filter"
+              accessibilityRole="button"
+            >
+              <Text style={styles.quickActionText}>Custom</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
+    </View>
   );
 };
 
+// ─── Styles ────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
-  root: { flex: 1 },
-  heroRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  heroInfo: { flex: 1 },
-  heroDetails: { flexDirection: 'row', marginTop: S.s4, paddingTop: S.s4, borderTopWidth: 1 },
-  detailItem: { flex: 1 },
-  detailDiv: { width: 1, marginHorizontal: S.s4 },
-  colorHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: S.s3 },
-  colorRow: { flexDirection: 'row', gap: S.s2, flexWrap: 'wrap' },
-  colorBtn: {
-    paddingHorizontal: S.s3, paddingVertical: S.s2,
-    borderRadius: R.xl, minHeight: S.s10,
-    justifyContent: 'center', alignItems: 'center',
-    flexDirection: 'row',
+  root: {
+    flex: 1,
+    backgroundColor: colors.voidBlack,
   },
-  presetsHeader: { marginBottom: S.s2, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+
+  // ─── C1: Live Canvas ──────────────────────────────────────────
+  liveCanvas: {
+    ...StyleSheet.absoluteFill,
+    zIndex: 0,
+  },
+
+  // ─── C2: Zone 1 — Command Strip ───────────────────────────────
+  zone1: {
+    zIndex: 1,
+    paddingHorizontal: S.s6,
+    paddingBottom: S.s6,
+    justifyContent: 'flex-end',
+    flex: 0,
+    height: '40%',
+  },
+  zone1TopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: S.s5,
+  },
+  brandLabel: {
+    fontSize: T.labelLg.size,
+    fontWeight: T.labelLg.weight as any,
+    lineHeight: T.labelLg.line,
+    letterSpacing: T.labelLg.letterSpacing,
+    color: colors.textMuted,
+    textTransform: 'uppercase',
+  } as any,
+  circleToggle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: colors.voidMid,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.voidRim,
+  },
+  circleToggleActive: {
+    borderColor: colors.accentAmberDim,
+    backgroundColor: colors.voidDeep,
+  },
+  percentageRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    marginTop: S.s2,
+  },
+  percentageNum: {
+    fontSize: T.displayXl.size,
+    fontWeight: T.displayXl.weight as any,
+    lineHeight: T.displayXl.line,
+    letterSpacing: T.displayXl.letterSpacing,
+    color: colors.textPrimary,
+  } as any,
+  percentageSymbol: {
+    fontSize: T.heading2.size,
+    fontWeight: T.heading2.weight as any,
+    lineHeight: T.heading2.line,
+    letterSpacing: T.heading2.letterSpacing,
+    color: colors.textPrimary,
+    marginLeft: S.s05,
+  } as any,
+  statusLabel: {
+    fontSize: T.labelLg.size,
+    fontWeight: T.labelLg.weight as any,
+    lineHeight: T.labelLg.line,
+    letterSpacing: T.labelLg.letterSpacing,
+    marginTop: S.s3,
+  } as any,
+  presetInfo: {
+    fontSize: T.bodyLg.size,
+    fontWeight: T.bodyLg.weight as any,
+    lineHeight: T.bodyLg.line,
+    letterSpacing: T.bodyLg.letterSpacing,
+    color: colors.textSecondary,
+    marginTop: S.s1,
+  } as any,
+  stopButton: {
+    backgroundColor: colors.danger,
+    borderRadius: R.radiusPill,
+    paddingHorizontal: S.s8,
+    paddingVertical: S.s3,
+    alignSelf: 'center',
+    marginTop: S.s5,
+  },
+  stopButtonText: {
+    fontSize: T.labelLg.size,
+    fontWeight: '700',
+    lineHeight: T.labelLg.line,
+    letterSpacing: T.labelLg.letterSpacing,
+    color: '#FFFFFF',
+    textTransform: 'uppercase',
+  },
+
+  // ─── C3: Zone 2 — Controls ────────────────────────────────────
+  zone2: {
+    zIndex: 1,
+    flex: 1,
+    backgroundColor: colors.voidBlack,
+    borderTopLeftRadius: R.radiusLg,
+    borderTopRightRadius: R.radiusLg,
+  },
+  zone2Content: {
+    paddingHorizontal: S.s6,
+    paddingTop: S.s6,
+  },
+
+  // ── Brightness ───────────────────────────────────────────────
+  brightnessSection: {
+    // No card wrapper per spec
+  },
+  brightnessHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: S.s3,
+  },
+  brightnessLabel: {
+    fontSize: T.labelLg.size,
+    fontWeight: T.labelLg.weight as any,
+    lineHeight: T.labelLg.line,
+    letterSpacing: T.labelLg.letterSpacing,
+    color: colors.textMuted,
+    textTransform: 'uppercase',
+  } as any,
+  brightnessValue: {
+    fontSize: T.monoNum.size,
+    fontWeight: T.monoNum.weight as any,
+    lineHeight: T.monoNum.line,
+    letterSpacing: T.monoNum.letterSpacing,
+    color: colors.textPrimary,
+  } as any,
+  slider: {
+    width: '100%',
+    height: S.s12,
+  },
+  sliderTicks: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: S.s05,
+  },
+  tickLabel: {
+    fontSize: T.labelSm.size,
+    fontWeight: T.labelSm.weight as any,
+    lineHeight: T.labelSm.line,
+    letterSpacing: T.labelSm.letterSpacing,
+    color: colors.textMuted,
+  } as any,
+
+  // ── Filter Strip ─────────────────────────────────────────────
+  filterSection: {
+    marginTop: S.s7,
+  },
+  filterStripContent: {
+    gap: S.s3,
+    paddingVertical: S.s2,
+  },
+  colorChip: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  colorChipSelected: {
+    borderColor: colors.voidRim,
+  },
+  colorChipAdd: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: colors.voidMid,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.voidRim,
+  },
+
+  // ── Presets Row ──────────────────────────────────────────────
+  presetsSection: {
+    marginTop: S.s7,
+  },
+  sectionLabel: {
+    fontSize: T.labelLg.size,
+    fontWeight: T.labelLg.weight as any,
+    lineHeight: T.labelLg.line,
+    letterSpacing: T.labelLg.letterSpacing,
+    color: colors.textMuted,
+    textTransform: 'uppercase',
+    marginBottom: S.s3,
+  } as any,
+  presetsStripContent: {
+    gap: S.s3,
+    paddingVertical: S.s1,
+  },
+  presetCard: {
+    width: 80,
+    height: 100,
+    borderRadius: R.radiusMd,
+    backgroundColor: colors.voidDeep,
+    borderWidth: 2,
+    borderColor: 'transparent',
+    overflow: 'hidden',
+    alignItems: 'center',
+  },
+  presetCardActive: {
+    borderColor: colors.accentAmber,
+  },
+  presetSwatch: {
+    width: '100%',
+    height: 64,
+  },
+  presetName: {
+    fontSize: T.bodySm.size,
+    fontWeight: T.bodySm.weight as any,
+    lineHeight: T.bodySm.line,
+    letterSpacing: T.bodySm.letterSpacing,
+    color: colors.textSecondary,
+    marginTop: S.s1,
+    textAlign: 'center',
+    paddingHorizontal: S.s1,
+  } as any,
+
+  // ── Quick Actions ────────────────────────────────────────────
+  quickActionsSection: {
+    marginTop: S.s7,
+  },
+  quickActionsRow: {
+    flexDirection: 'row',
+    gap: S.s3,
+  },
+  quickActionPill: {
+    flex: 1,
+    backgroundColor: colors.voidMid,
+    borderRadius: R.radiusPill,
+    paddingVertical: S.s3,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.voidRim,
+  },
+  quickActionText: {
+    fontSize: T.labelLg.size,
+    fontWeight: T.labelLg.weight as any,
+    lineHeight: T.labelLg.line,
+    letterSpacing: T.labelLg.letterSpacing,
+    color: colors.textPrimary,
+  } as any,
 });
 
 export default HomeScreen;

@@ -188,6 +188,16 @@ class StorageService {
   // ─── Bubble Persistence ──────────────────────────────────────
   async getBubbleEnabled(): Promise<boolean> { try { return (await AsyncStorage.getItem(StorageKeys.BUBBLE_ENABLED)) === 'true'; } catch { return false; } }
   async setBubbleEnabled(v: boolean): Promise<void> { await AsyncStorage.setItem(StorageKeys.BUBBLE_ENABLED, String(v)); }
+
+  // ─── Privacy Filter ─────────────────────────────────────────
+  async getPrivacyFilterEnabled(): Promise<boolean> { try { return (await AsyncStorage.getItem(StorageKeys.PRIVACY_FILTER_ENABLED)) === 'true'; } catch { return false; } }
+  async setPrivacyFilterEnabled(v: boolean): Promise<void> { await AsyncStorage.setItem(StorageKeys.PRIVACY_FILTER_ENABLED, String(v)); }
+
+  async getPrivacyDensity(): Promise<string> { try { const v = await AsyncStorage.getItem(StorageKeys.PRIVACY_DENSITY); return v ?? 'standard'; } catch { return 'standard'; } }
+  async setPrivacyDensity(d: string): Promise<void> { await AsyncStorage.setItem(StorageKeys.PRIVACY_DENSITY, d); }
+
+  async getPrivacyWallOpacity(): Promise<number> { try { const v = await AsyncStorage.getItem(StorageKeys.PRIVACY_WALL_OPACITY); return v != null ? parseFloat(v) : 0.75; } catch { return 0.75; } }
+  async setPrivacyWallOpacity(o: number): Promise<void> { await AsyncStorage.setItem(StorageKeys.PRIVACY_WALL_OPACITY, String(o)); }
 }
 
 export const storageService = new StorageService();

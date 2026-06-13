@@ -66,6 +66,7 @@ export type BottomTab = 'home' | 'presets' | 'settings';
 export type SettingsSection =
   | 'appearance'
   | 'overlay'
+  | 'privacy'
   | 'startup'
   | 'advanced';
 

@@ -21,6 +21,10 @@ class OverlayModule(reactContext: ReactApplicationContext) :
 
     override fun getName(): String = "OverlayModule"
 
+    // ─── Privacy Filter ─────────────────────────────────────────
+
+    private var privacyService: PrivacyOverlayService? = null
+
     // ─── State Emission ──────────────────────────────────────────
 
     /**
@@ -317,6 +321,37 @@ class OverlayModule(reactContext: ReactApplicationContext) :
                 promise.reject("SETTINGS_ERROR", "Failed: ${e2.message}")
             }
         }
+    }
+
+    // ─── Privacy Filter Bridge ─────────────────────────────────────
+
+    @ReactMethod
+    fun startPrivacyFilter(densityMode: String, opacity: Double, promise: Promise) {
+        try {
+            if (privacyService == null) {
+                privacyService = PrivacyOverlayService(reactApplicationContext)
+            }
+            val density = when (densityMode.lowercase()) {
+                "subtle"   -> PrivacyOverlayService.PrivacyDensity.SUBTLE
+                "strong"   -> PrivacyOverlayService.PrivacyDensity.STRONG
+                else       -> PrivacyOverlayService.PrivacyDensity.STANDARD
+            }
+            privacyService?.start(density, opacity.toFloat())
+            promise.resolve(true)
+        } catch (e: Exception) {
+            promise.reject("PRIVACY_ERROR", e.message)
+        }
+    }
+
+    @ReactMethod
+    fun stopPrivacyFilter(promise: Promise) {
+        privacyService?.stop()
+        promise.resolve(true)
+    }
+
+    @ReactMethod
+    fun isPrivacyFilterActive(promise: Promise) {
+        promise.resolve(privacyService?.isRunning() ?: false)
     }
 
     // ─── Helpers ─────────────────────────────────────────────────
