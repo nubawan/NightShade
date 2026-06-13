@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, useColorScheme } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { getThemeColors, Spacing, Typography, Shape, Animation } from '../theme';
-import { opacityToPercent, debounce } from '../utils/helpers';
+import { opacityToPercent, debounce, getBrightnessLabel } from '../utils/helpers';
 
 interface BrightnessSliderProps {
   opacity: number;
@@ -33,7 +33,7 @@ const BrightnessSlider: React.FC<BrightnessSliderProps> = ({
         <Slider
           style={styles.slider}
           minimumValue={0}
-          maximumValue={1}
+          maximumValue={1.80}
           step={0.01}
           value={opacity}
           onValueChange={onValueChange}
@@ -42,13 +42,14 @@ const BrightnessSlider: React.FC<BrightnessSliderProps> = ({
           maximumTrackTintColor={colors.outlineVariant}
           thumbTintColor={colors.primary}
           accessibilityLabel="Brightness level"
-          accessibilityValue={{ text: opacityToPercent(opacity) }}
+          accessibilityValue={{ text: `${opacityToPercent(opacity)} ${getBrightnessLabel(opacity)}` }}
         />
         <Text style={styles.iconMoon}>🌙</Text>
       </View>
       <View style={styles.labels}>
         <Text style={[styles.labelText, { color: colors.onSurfaceVariant }]}>0%</Text>
-        <Text style={[styles.labelText, { color: colors.onSurfaceVariant }]}>100%</Text>
+        <Text style={[styles.labelText, { color: colors.outline }]}>100%</Text>
+        <Text style={[styles.labelText, { color: colors.onSurfaceVariant }]}>180%</Text>
       </View>
     </View>
   );

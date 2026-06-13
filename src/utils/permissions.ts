@@ -48,15 +48,17 @@ export function generateId(): string {
 }
 
 /**
- * Convert opacity (0-1) to percentage string
+ * Convert opacity (0.0–2.0) to percentage string.
+ * 1.0 = 100%, 2.0 = 200% (extended brightness)
  */
 export function opacityToPercent(opacity: number): string {
   return `${Math.round(opacity * 100)}%`;
 }
 
 /**
- * Convert percentage to opacity (0-1)
+ * Convert percentage to opacity (0.0–2.0 range for extended brightness).
+ * 100% → 1.0, 200% → 2.0
  */
 export function percentToOpacity(percent: number): number {
-  return Math.max(0, Math.min(1, percent / 100));
+  return Math.max(0, Math.min(2, percent / 100));
 }

@@ -1,6 +1,6 @@
 /**
- * NightShade V4 — Storage Service
- * Extended opacity 0–2.0, more presets, bubble persistence, deletion safety
+ * NightShade V5 — Storage Service
+ * Extended opacity 0–1.80, preset deduplication, mutex on getPresets, permission-safe
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -26,7 +26,18 @@ const BUILT_IN_PRESETS: FilterPreset[] = FILTER_PRESETS.map((p, i) => ({
   lastUsedAt: null,
 }));
 
+/** Map of old ID formats → current canonical IDs for migration */
+const ID_MIGRATION: Record<string, string> = {};
+BUILT_IN_PRESETS.forEach((p, i) => {
+  // Map old formats like "builtin_2" → current "ns_builtin_2_xxx"
+  ID_MIGRATION[`builtin_${i}`] = p.id;
+  ID_MIGRATION[`preset_builtin_${i}`] = p.id;
+});
+
 class StorageService {
+  // ─── Mutex for getPresets (prevents concurrent double-merge) ─────
+  private presetsLock: Promise<FilterPreset[]> = Promise.resolve([] as FilterPreset[]);
+
   // ─── Overlay Settings ────────────────────────────────────────
   async getOverlaySettings(): Promise<OverlaySettings> {
     try {
@@ -39,21 +50,45 @@ class StorageService {
     try { await AsyncStorage.setItem(StorageKeys.OVERLAY_SETTINGS, JSON.stringify(s)); } catch {}
   }
 
-  // ─── Presets ─────────────────────────────────────────────────
+  // ─── Presets (with dedup + mutex + ID migration) ─────────────
   async getPresets(): Promise<FilterPreset[]> {
+    // Mutex: chain on previous call to prevent concurrent merge races
+    this.presetsLock = this.presetsLock.then(() => this._getPresetsInner());
+    return this.presetsLock;
+  }
+
+  private async _getPresetsInner(): Promise<FilterPreset[]> {
     try {
       const raw = await AsyncStorage.getItem(StorageKeys.PRESETS);
       if (raw) {
-        const stored = JSON.parse(raw) as FilterPreset[];
-        // Merge new built-in presets if app was updated
-        const existingNames = new Set(stored.filter(p => p.isBuiltIn).map(p => p.name));
-        const newBuiltIns = BUILT_IN_PRESETS.filter(b => !existingNames.has(b.name));
-        if (newBuiltIns.length > 0) {
-          const merged = [...stored, ...newBuiltIns];
+        let stored = JSON.parse(raw) as FilterPreset[];
+
+        // Step 1: Migrate stale IDs (old format → new format)
+        stored = stored.map(p => {
+          if (p.isBuiltIn && ID_MIGRATION[p.id]) {
+            return { ...p, id: ID_MIGRATION[p.id] };
+          }
+          return p;
+        });
+
+        // Step 2: Deduplicate by ID (remove any duplicates, keep first occurrence)
+        const seenIds = new Set<string>();
+        const deduped = stored.filter(p => {
+          if (seenIds.has(p.id)) return false;
+          seenIds.add(p.id);
+          return true;
+        });
+
+        // Step 3: Merge new built-in presets if app was updated
+        const existingIds = new Set(deduped.filter(p => p.isBuiltIn).map(p => p.id));
+        const newBuiltIns = BUILT_IN_PRESETS.filter(b => !existingIds.has(b.id));
+        if (newBuiltIns.length > 0 || deduped.length !== stored.length) {
+          // Save if we added presets or removed duplicates
+          const merged = [...deduped, ...newBuiltIns];
           await this.savePresets(merged);
           return merged;
         }
-        return stored;
+        return deduped;
       }
       await this.savePresets(BUILT_IN_PRESETS);
       return [...BUILT_IN_PRESETS];

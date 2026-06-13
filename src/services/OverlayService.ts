@@ -13,8 +13,9 @@ const guard = <T>(fn: () => Promise<T>, fallback: T): Promise<T> => {
   try { return fn(); } catch { return Promise.resolve(fallback); }
 };
 
-/** Clamp opacity to 0–2.0 range for extended brightness */
-const clampOpacity = (o: number) => Math.max(0, Math.min(2.0, o));
+/** Clamp opacity to 0–MAX_SAFE_OPACITY range for safety */
+const MAX_SAFE_OPACITY = 1.80; // Matches native OverlayService.MAX_SAFE_OPACITY
+const clampOpacity = (o: number) => Math.max(0, Math.min(MAX_SAFE_OPACITY, o));
 
 export const overlayService = {
   // ─── Overlay Control ──────────────────────────────────────────
@@ -24,19 +25,23 @@ export const overlayService = {
   isEnabled: (): Promise<boolean> => guard(() => M.isOverlayEnabled(), false),
 
   // ─── Overlay Properties ───────────────────────────────────────
-  /** Set opacity 0.0–2.0 (extended brightness range) */
+  /** Set opacity 0.0–MAX_SAFE_OPACITY (extended brightness range with safety cap) */
   setOpacity: (o: number): Promise<void> => guard(() => M.setOpacity(clampOpacity(o)), undefined),
   setColor: (c: string): Promise<void> => guard(() => M.setColor(c), undefined),
-  /** Full update with extended opacity support */
+  /** Full update with extended opacity support (safety capped) */
   update: (s: OverlaySettings): Promise<void> =>
     guard(() => M.updateOverlay(s.enabled, clampOpacity(s.opacity), s.color), undefined),
 
   // ─── Brightness Set (replaces +/-) ────────────────────────────
-  /** Set brightness to a specific level 0.0–2.0 */
+  /** Set brightness to a specific level 0.0–MAX_SAFE_OPACITY */
   setBrightness: (level: number): Promise<void> =>
     guard(() => M.setOpacity(clampOpacity(level)), undefined),
   brightnessUp: (): Promise<void> => guard(() => M.brightnessUp(), undefined),
   brightnessDown: (): Promise<void> => guard(() => M.brightnessDown(), undefined),
+
+  // ─── Emergency Reset ──────────────────────────────────────────
+  /** Emergency reset: reduces brightness to safe 50% if user is locked out */
+  emergencyReset: (): Promise<void> => guard(() => M.emergencyReset(), undefined),
 
   // ─── Permissions ──────────────────────────────────────────────
   hasPermission: (): Promise<boolean> => guard(() => M.hasOverlayPermission(), false),

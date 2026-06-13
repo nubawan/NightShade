@@ -92,6 +92,14 @@ class OverlayStateStore {
   async setEnabled(enabled: boolean): Promise<void> {
     try {
       if (enabled) {
+        // Check permission before enabling overlay
+        const hasPermission = await M.hasOverlayPermission();
+        if (!hasPermission) {
+          // Permission lost — update state to reflect reality
+          this.state = { ...this.state, enabled: false };
+          this.notify();
+          return;
+        }
         await M.updateOverlay(true, this.state.opacity, this.state.color);
       } else {
         await M.disableOverlay();
@@ -108,8 +116,15 @@ class OverlayStateStore {
   }
 
   async setOpacity(opacity: number): Promise<void> {
-    const clamped = Math.max(0, Math.min(2.0, opacity));
+    const clamped = Math.max(0, Math.min(1.80, opacity)); // MAX_SAFE_OPACITY = 1.80
     try {
+      // Check permission before enabling overlay (setOpacity auto-enables)
+      const hasPermission = await M.hasOverlayPermission();
+      if (!hasPermission) {
+        this.state = { ...this.state, enabled: false };
+        this.notify();
+        return;
+      }
       await M.setOpacity(clamped);
       this.state = { ...this.state, opacity: clamped, enabled: true };
       await this.persistSettings();
@@ -128,6 +143,13 @@ class OverlayStateStore {
 
   async applyPreset(presetId: string, opacity: number, color: string): Promise<void> {
     try {
+      // Check permission before enabling overlay
+      const hasPermission = await M.hasOverlayPermission();
+      if (!hasPermission) {
+        this.state = { ...this.state, enabled: false };
+        this.notify();
+        return;
+      }
       const newState: OverlaySettings = { enabled: true, opacity, color, presetId };
       await M.updateOverlay(true, opacity, color);
       await M.updateTileState(true);

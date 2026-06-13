@@ -1,12 +1,13 @@
 /**
- * NightShade V4 — Type Definitions
- * Extended brightness (0–200%), enhanced filter system, accordion settings
+ * NightShade V5 — Type Definitions
+ * Extended brightness (0–180%), enhanced filter system, accordion settings
  */
 
 // ─── Overlay ──────────────────────────────────────────────────────
 export interface OverlaySettings {
   enabled: boolean;
-  /** 0.0–2.0 (0%–200%) — values >1.0 trigger multi-layer overlay */
+  /** 0.0–1.80 (0%–180%) — values >1.0 trigger multi-layer overlay.
+   *  Capped at 1.80 (not 2.0) to prevent screen lockout. */
   opacity: number;
   color: string;
   presetId: string | null;
@@ -16,7 +17,7 @@ export interface OverlaySettings {
 export interface FilterPreset {
   id: string;
   name: string;
-  /** 0.0–2.0 */
+  /** 0.0–1.80 (safety capped) */
   opacity: number;
   color: string;
   isBuiltIn?: boolean;
@@ -25,6 +26,9 @@ export interface FilterPreset {
   createdAt: number;
   lastUsedAt: number | null;
 }
+
+/** Backward-compatible alias — older components import Preset */
+export type Preset = FilterPreset;
 
 export type FilterCategory =
   | 'warm'

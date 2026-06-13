@@ -43,15 +43,22 @@ class OverlayService : Service() {
         const val ACTION_BRIGHTNESS_UP = "com.screenfilterapp.BRIGHTNESS_UP"
         const val ACTION_BRIGHTNESS_DOWN = "com.screenfilterapp.BRIGHTNESS_DOWN"
         const val ACTION_SET_BRIGHTNESS = "com.screenfilterapp.SET_BRIGHTNESS"
+        const val ACTION_EMERGENCY_RESET = "com.screenfilterapp.EMERGENCY_RESET"
 
         const val EXTRA_OPACITY = "opacity"
         const val EXTRA_COLOR = "color"
+
+        /** Maximum safe opacity — prevents screen lockout.
+         *  At 2.0 (200%) the screen is almost completely black and unusable.
+         *  We cap at a safe maximum but still allow extended dimming.
+         */
+        const val MAX_SAFE_OPACITY = 1.80f  // 180% — dark but still usable
 
         var isRunning = false
             private set
         var currentEnabled = false
             private set
-        /** V4: 0.0–2.0 range for extended brightness */
+        /** V4: 0.0–MAX_SAFE_OPACITY range for extended brightness */
         var currentOpacity = 0.3f
             private set
         var currentColor = 0xFF000000.toInt()
@@ -90,7 +97,8 @@ class OverlayService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_ENABLE -> {
-                intent.getFloatExtra(EXTRA_OPACITY, currentOpacity).let { currentOpacity = it }
+                val requestedOpacity = intent.getFloatExtra(EXTRA_OPACITY, currentOpacity)
+                currentOpacity = requestedOpacity.coerceIn(0f, MAX_SAFE_OPACITY)
                 intent.getStringExtra(EXTRA_COLOR)?.let { currentColor = parseColor(it) }
                 currentEnabled = true
                 showOverlay()
@@ -122,13 +130,14 @@ class OverlayService : Service() {
                 updateNotification()
             }
             ACTION_UPDATE -> {
-                intent.getFloatExtra(EXTRA_OPACITY, currentOpacity).let { currentOpacity = it }
+                val requestedOpacity = intent.getFloatExtra(EXTRA_OPACITY, currentOpacity)
+                currentOpacity = requestedOpacity.coerceIn(0f, MAX_SAFE_OPACITY)
                 intent.getStringExtra(EXTRA_COLOR)?.let { currentColor = parseColor(it) }
                 if (isOverlayVisible) debouncedUpdateOverlay()
                 saveState()
             }
             ACTION_BRIGHTNESS_UP -> {
-                currentOpacity = (currentOpacity + 0.05f).coerceAtMost(2.0f)
+                currentOpacity = (currentOpacity + 0.05f).coerceAtMost(MAX_SAFE_OPACITY)
                 if (isOverlayVisible) debouncedUpdateOverlay()
                 saveState()
                 updateNotification()
@@ -141,8 +150,16 @@ class OverlayService : Service() {
             }
             ACTION_SET_BRIGHTNESS -> {
                 val level = intent.getFloatExtra(EXTRA_OPACITY, currentOpacity)
-                currentOpacity = level.coerceIn(0f, 2f)
+                currentOpacity = level.coerceIn(0f, MAX_SAFE_OPACITY)
                 if (isOverlayVisible) debouncedUpdateOverlay()
+                saveState()
+                updateNotification()
+            }
+            ACTION_EMERGENCY_RESET -> {
+                // Emergency: reduce opacity to safe level if user is locked out
+                currentOpacity = 0.5f
+                currentEnabled = true
+                if (isOverlayVisible) updateOverlay() else showOverlay()
                 saveState()
                 updateNotification()
             }
@@ -210,8 +227,10 @@ class OverlayService : Service() {
 
         val baseFlags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
                 WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
+                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
                 WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
-                WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
+                WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
+                WindowManager.LayoutParams.FLAG_LAYOUT_INSET_DECOR
 
         // Primary overlay (always present when enabled)
         primaryOverlay = View(this).apply {
@@ -307,8 +326,10 @@ class OverlayService : Service() {
                 }
                 val baseFlags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
                         WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
+                        WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
                         WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
-                        WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
+                        WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
+                        WindowManager.LayoutParams.FLAG_LAYOUT_INSET_DECOR
                 addSecondaryOverlay(type, baseFlags)
             } else {
                 try {
@@ -363,7 +384,7 @@ class OverlayService : Service() {
                 when (intent?.action) {
                     "com.screenfilterapp.NOTIF_BRIGHTNESS" -> {
                         val level = intent.getFloatExtra(EXTRA_OPACITY, currentOpacity)
-                        currentOpacity = level.coerceIn(0f, 2f)
+                        currentOpacity = level.coerceIn(0f, MAX_SAFE_OPACITY)
                         if (isOverlayVisible) debouncedUpdateOverlay()
                         saveState()
                         updateNotification()

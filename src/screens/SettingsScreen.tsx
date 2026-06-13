@@ -204,7 +204,7 @@ const SettingsScreen: React.FC = () => {
           { label: 'Version', value: '3.0.0' },
           { label: 'Engine', value: 'WindowManager Overlay' },
           { label: 'Design', value: 'Material Design 3' },
-          { label: 'Max Brightness', value: '200% Extended' },
+          { label: 'Max Brightness', value: '180% Safe Extended' },
         ].map((item, i, a) => (
           <React.Fragment key={item.label}>
             <View style={ss.aboutRow}>

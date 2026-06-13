@@ -9,14 +9,14 @@ import {
   useColorScheme,
 } from 'react-native';
 import Toggle from '../components/Toggle';
-import BrightnessSlider from '../components/BrightnessSlider';
+import { BrightnessCard } from '../components/AppComponents';
 import ColorSelector from '../components/ColorSelector';
 import PresetChip from '../components/PresetChip';
 import { getThemeColors, Spacing, Typography, Shape, Animation } from '../theme';
 import { OverlaySettings, Preset } from '../types';
 import { overlayService } from '../services/OverlayService';
 import { storageService } from '../services/StorageService';
-import { opacityToPercent, getColorName, debounce } from '../utils/helpers';
+import { pctStr, getColorName, debounce } from '../utils/helpers';
 
 interface DashboardScreenProps {
   onNavigatePresets: () => void;
@@ -197,7 +197,7 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({
             <View style={styles.detailItem}>
               <Text style={[styles.detailLabel, { color: colors.onSurfaceVariant }]}>Dim Level</Text>
               <Text style={[styles.detailValue, { color: settings.enabled ? colors.onPrimaryContainer : colors.onSurface }]}>
-                {opacityToPercent(settings.opacity)}
+                {pctStr(settings.opacity)}
               </Text>
             </View>
             <View style={[styles.detailDivider, { backgroundColor: colors.outlineVariant }]} />
@@ -215,11 +215,10 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({
       </Animated.View>
 
       {/* ── Brightness Card ───────────────────────────────────── */}
-      <BrightnessSlider
+      <BrightnessCard
         opacity={settings.opacity}
         onValueChange={handleOpacityChange}
         onSlidingComplete={handleOpacityComplete}
-        label="Brightness Reduction"
       />
 
       {/* ── Filter Card ───────────────────────────────────────── */}

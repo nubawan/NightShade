@@ -76,7 +76,7 @@ const sw = StyleSheet.create({
   thumb: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#FFF', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 2 },
 });
 
-// ─── Brightness Slider Card (0–200% Extended) ────────────────────
+// ─── Brightness Slider Card (0–180% Safe Extended) ─────────────
 export const BrightnessCard: React.FC<{
   opacity: number;
   onValueChange: (v: number) => void;
@@ -104,7 +104,7 @@ export const BrightnessCard: React.FC<{
         <Slider
           style={bs.slider}
           minimumValue={0}
-          maximumValue={2.0}
+          maximumValue={1.80}
           step={0.01}
           value={opacity}
           onValueChange={onValueChange}
@@ -119,7 +119,7 @@ export const BrightnessCard: React.FC<{
       <View style={bs.labels}>
         <Text style={{ ...T.labelS, color: palette.onSurfaceVariant }}>0%</Text>
         <Text style={{ ...T.labelS, color: palette.outline }}>100%</Text>
-        <Text style={{ ...T.labelS, color: palette.onSurfaceVariant }}>200%</Text>
+        <Text style={{ ...T.labelS, color: palette.onSurfaceVariant }}>180%</Text>
       </View>
     </Card>
   );

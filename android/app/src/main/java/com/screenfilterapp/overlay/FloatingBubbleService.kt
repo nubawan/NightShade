@@ -323,8 +323,8 @@ class FloatingBubbleService : Service() {
 
             // SeekBar
             val seekBar = SeekBar(context).apply {
-                max = 200
-                progress = currentPct.coerceAtMost(200)
+                max = 180  // MAX_SAFE_OPACITY * 100 = 180%
+                progress = currentPct.coerceAtMost(180)
                 setPadding(0, 4, 0, 8)
                 setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
                     override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
@@ -346,7 +346,7 @@ class FloatingBubbleService : Service() {
             val presetsRow = LinearLayout(context).apply {
                 orientation = LinearLayout.HORIZONTAL
                 gravity = Gravity.CENTER_HORIZONTAL
-                val presets = listOf("25%" to 25, "50%" to 50, "75%" to 75, "100%" to 100, "150%" to 150)
+                val presets = listOf("25%" to 25, "50%" to 50, "75%" to 75, "100%" to 100, "150%" to 150, "180%" to 180)
                 presets.forEach { (label, pct) ->
                     addView(TextView(context).apply {
                         text = label

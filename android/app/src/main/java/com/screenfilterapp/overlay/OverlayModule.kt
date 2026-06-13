@@ -97,10 +97,11 @@ class OverlayModule(reactContext: ReactApplicationContext) :
     @ReactMethod
     fun setOpacity(opacity: Double, promise: Promise) {
         try {
-            val clamped = opacity.toFloat().coerceIn(0f, 2f)
+            val maxSafe = OverlayService.MAX_SAFE_OPACITY.toDouble()
+            val clamped = opacity.coerceIn(0.0, maxSafe)
             val intent = Intent(reactApplicationContext, OverlayService::class.java).apply {
                 action = OverlayService.ACTION_SET_BRIGHTNESS
-                putExtra(OverlayService.EXTRA_OPACITY, clamped)
+                putExtra(OverlayService.EXTRA_OPACITY, clamped.toFloat())
             }
             startForegroundService(intent)
             emitStateUpdate()
@@ -128,10 +129,11 @@ class OverlayModule(reactContext: ReactApplicationContext) :
     @ReactMethod
     fun updateOverlay(enabled: Boolean, opacity: Double, color: String, promise: Promise) {
         try {
+            val maxSafe = OverlayService.MAX_SAFE_OPACITY.toDouble()
             if (enabled) {
                 val intent = Intent(reactApplicationContext, OverlayService::class.java).apply {
                     action = OverlayService.ACTION_ENABLE
-                    putExtra(OverlayService.EXTRA_OPACITY, opacity.toFloat().coerceIn(0f, 2f))
+                    putExtra(OverlayService.EXTRA_OPACITY, opacity.coerceIn(0.0, maxSafe).toFloat())
                     putExtra(OverlayService.EXTRA_COLOR, color)
                 }
                 startForegroundService(intent)
@@ -145,6 +147,22 @@ class OverlayModule(reactContext: ReactApplicationContext) :
             promise.resolve(null)
         } catch (e: Exception) {
             promise.reject("OVERLAY_ERROR", "Failed to update overlay: ${e.message}")
+        }
+    }
+
+    // ─── Emergency Reset ─────────────────────────────────────────
+
+    @ReactMethod
+    fun emergencyReset(promise: Promise) {
+        try {
+            val intent = Intent(reactApplicationContext, OverlayService::class.java).apply {
+                action = OverlayService.ACTION_EMERGENCY_RESET
+            }
+            startForegroundService(intent)
+            emitStateUpdate()
+            promise.resolve(null)
+        } catch (e: Exception) {
+            promise.reject("OVERLAY_ERROR", "Failed emergency reset: ${e.message}")
         }
     }
 
