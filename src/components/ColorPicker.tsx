@@ -12,7 +12,7 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, TextInput, Modal, Dimensions, PanResponder } from 'react-native';
 import Slider from '@react-native-community/slider';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { S, T, R, ANIM } from '../theme';
+import { S, T, R, ANIM, colors } from '../theme';
 import { useAppTheme } from '../context/ThemeContext';
 import { hexToRgb, rgbToHex, rgbToHsv, hsvToRgb, clamp } from '../utils/helpers';
 
@@ -248,12 +248,12 @@ const cp = StyleSheet.create({
   hueBarWrap: { position: 'relative', height: 32, borderRadius: R.sm, overflow: 'hidden' },
   hueBar: { flexDirection: 'row', height: 32 },
   hueSegment: { flex: 1, height: 32 },
-  hueIndicator: { position: 'absolute', top: 0, width: 16, height: 32, borderRadius: 4, borderWidth: 3, borderColor: '#FFF', backgroundColor: 'transparent', elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.4, shadowRadius: 2 },
+  hueIndicator: { position: 'absolute', top: 0, width: 16, height: 32, borderRadius: 4, borderWidth: 3, borderColor: colors.textPrimary, backgroundColor: 'transparent', elevation: 4, shadowColor: colors.voidBlack, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.4, shadowRadius: 2 },
   svAreaWrap: { position: 'relative', height: SV_AREA_H, width: SV_AREA_W, borderRadius: R.sm, overflow: 'hidden', borderWidth: 1 },
   svArea: { flex: 1 },
   svWhiteOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'linear-gradient(to right, #FFF, transparent)' },
   svBlackOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'linear-gradient(to top, #000, transparent)' },
-  svIndicator: { position: 'absolute', width: 16, height: 16, borderRadius: 8, borderWidth: 3, borderColor: '#FFF', backgroundColor: 'transparent', elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.4, shadowRadius: 2 },
+  svIndicator: { position: 'absolute', width: 16, height: 16, borderRadius: 8, borderWidth: 3, borderColor: colors.textPrimary, backgroundColor: 'transparent', elevation: 4, shadowColor: colors.voidBlack, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.4, shadowRadius: 2 },
   // RGB tab
   slidersWrap: { paddingHorizontal: S.s4, paddingTop: S.s6 },
   sliderRow: { flexDirection: 'row', alignItems: 'center', marginBottom: S.s4, gap: S.s2 },

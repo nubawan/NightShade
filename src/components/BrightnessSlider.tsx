@@ -1,8 +1,14 @@
+/**
+ * NightShade Revamp — Brightness Slider
+ * Void Architecture design tokens. No emoji. Vector icons only.
+ */
+
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Slider from '@react-native-community/slider';
-import { colors, S, T, R, ANIM } from '../theme';
-import { opacityToPercent, debounce, getBrightnessLabel } from '../utils/helpers';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { colors, S, T, R } from '../theme';
+import { opacityToPercent, getBrightnessLabel } from '../utils/helpers';
 
 interface BrightnessSliderProps {
   opacity: number;
@@ -19,15 +25,15 @@ const BrightnessSlider: React.FC<BrightnessSliderProps> = ({
 }) => {
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.surfaceContainer }]}>
+    <View style={[styles.container, { backgroundColor: colors.voidDeep, borderColor: colors.voidRim }]}>
       <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.onSurface }]}>{label}</Text>
-        <Text style={[styles.value, { color: colors.primary }]}>
+        <Text style={styles.title}>{label}</Text>
+        <Text style={styles.value}>
           {opacityToPercent(opacity)}
         </Text>
       </View>
       <View style={styles.sliderRow}>
-        <Text style={styles.iconSun}>☀️</Text>
+        <Icon name="weather-sunny" size={18} color={colors.textMuted} />
         <Slider
           style={styles.slider}
           minimumValue={0}
@@ -36,18 +42,18 @@ const BrightnessSlider: React.FC<BrightnessSliderProps> = ({
           value={opacity}
           onValueChange={onValueChange}
           onSlidingComplete={onSlidingComplete}
-          minimumTrackTintColor={colors.primary}
-          maximumTrackTintColor={colors.outlineVariant}
-          thumbTintColor={colors.primary}
+          minimumTrackTintColor={colors.accentAmber}
+          maximumTrackTintColor={colors.voidRim}
+          thumbTintColor={colors.accentAmber}
           accessibilityLabel="Brightness level"
           accessibilityValue={{ text: `${opacityToPercent(opacity)} ${getBrightnessLabel(opacity)}` }}
         />
-        <Text style={styles.iconMoon}>🌙</Text>
+        <Icon name="moon-waning-crescent" size={18} color={colors.textMuted} />
       </View>
       <View style={styles.labels}>
-        <Text style={[styles.labelText, { color: colors.onSurfaceVariant }]}>0%</Text>
-        <Text style={[styles.labelText, { color: colors.outline }]}>100%</Text>
-        <Text style={[styles.labelText, { color: colors.onSurfaceVariant }]}>180%</Text>
+        <Text style={styles.labelText}>0%</Text>
+        <Text style={styles.labelText}>100%</Text>
+        <Text style={styles.labelText}>180%</Text>
       </View>
     </View>
   );
@@ -58,6 +64,7 @@ const styles = StyleSheet.create({
     borderRadius: R.radiusLg,
     padding: S.s4,
     marginVertical: S.s1,
+    borderWidth: 1,
   },
   header: {
     flexDirection: 'row',
@@ -66,26 +73,22 @@ const styles = StyleSheet.create({
     marginBottom: S.s3,
   },
   title: {
-    ...T.titleM,
+    ...T.heading2,
+    color: colors.textPrimary,
+    fontWeight: '600',
   },
   value: {
-    ...T.titleM,
-    fontWeight: '700',
+    ...T.monoNum,
+    color: colors.accentAmber,
   },
   sliderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: S.s2,
   },
-  iconSun: {
-    fontSize: 16,
-  },
-  iconMoon: {
-    fontSize: 16,
-  },
   slider: {
     flex: 1,
-    height: 48, // Accessibility: minimum touch target
+    height: 48,
   },
   labels: {
     flexDirection: 'row',
@@ -93,7 +96,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   labelText: {
-    ...T.labelS,
+    ...T.labelSm,
+    color: colors.textMuted,
   },
 });
 

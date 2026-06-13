@@ -89,7 +89,8 @@ class OverlayStateStore {
 
   // ─── Write Methods (update both native + local state) ─────────
 
-  async setEnabled(enabled: boolean): Promise<void> {
+  /** Returns true if action succeeded, false if permission was denied */
+  async setEnabled(enabled: boolean): Promise<boolean> {
     try {
       if (enabled) {
         // Check permission before enabling overlay
@@ -98,7 +99,7 @@ class OverlayStateStore {
           // Permission lost — update state to reflect reality
           this.state = { ...this.state, enabled: false };
           this.notify();
-          return;
+          return false; // Signal: permission denied
         }
         await M.updateOverlay(true, this.state.opacity, this.state.color);
       } else {
@@ -108,14 +109,17 @@ class OverlayStateStore {
       this.state = { ...this.state, enabled };
       await this.persistSettings();
       this.notify();
-    } catch {}
+      return true;
+    } catch { return false; }
   }
 
-  async toggle(): Promise<void> {
-    await this.setEnabled(!this.state.enabled);
+  /** Returns true if toggle succeeded, false if permission was denied */
+  async toggle(): Promise<boolean> {
+    return this.setEnabled(!this.state.enabled);
   }
 
-  async setOpacity(opacity: number): Promise<void> {
+  /** Returns true if action succeeded, false if permission was denied */
+  async setOpacity(opacity: number): Promise<boolean> {
     const clamped = Math.max(0, Math.min(1.80, opacity)); // MAX_SAFE_OPACITY = 1.80
     try {
       // Check permission before enabling overlay (setOpacity auto-enables)
@@ -123,13 +127,14 @@ class OverlayStateStore {
       if (!hasPermission) {
         this.state = { ...this.state, enabled: false };
         this.notify();
-        return;
+        return false; // Signal: permission denied
       }
       await M.setOpacity(clamped);
       this.state = { ...this.state, opacity: clamped, enabled: true };
       await this.persistSettings();
       this.notify();
-    } catch {}
+      return true;
+    } catch { return false; }
   }
 
   async setColor(color: string): Promise<void> {
@@ -141,14 +146,15 @@ class OverlayStateStore {
     } catch {}
   }
 
-  async applyPreset(presetId: string, opacity: number, color: string): Promise<void> {
+  /** Returns true if action succeeded, false if permission was denied */
+  async applyPreset(presetId: string, opacity: number, color: string): Promise<boolean> {
     try {
       // Check permission before enabling overlay
       const hasPermission = await M.hasOverlayPermission();
       if (!hasPermission) {
         this.state = { ...this.state, enabled: false };
         this.notify();
-        return;
+        return false; // Signal: permission denied
       }
       const newState: OverlaySettings = { enabled: true, opacity, color, presetId };
       await M.updateOverlay(true, opacity, color);
@@ -158,7 +164,8 @@ class OverlayStateStore {
       await storageService.markPresetUsed(presetId);
       await this.persistSettings();
       this.notify();
-    } catch {}
+      return true;
+    } catch { return false; }
   }
 
   async deleteActivePreset(): Promise<void> {

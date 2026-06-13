@@ -12,7 +12,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated, LayoutAnimation, Platform } from 'react-native';
 import Slider from '@react-native-community/slider';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { S, T, R, ANIM } from '../theme';
+import { S, T, R, ANIM, colors } from '../theme';
 import { useAppTheme } from '../context/ThemeContext';
 import { BottomTab } from '../types';
 import { pctStr, getBrightnessLabel } from '../utils/helpers';
@@ -73,7 +73,7 @@ const sw = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: S.s12, paddingVertical: S.s2 },
   label: { ...T.bodyLg, fontWeight: '500', flex: 1, marginRight: S.s4 },
   track: { width: 52, height: 32, borderRadius: 16, justifyContent: 'center', paddingHorizontal: 2 },
-  thumb: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#FFF', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 2 },
+  thumb: { width: 28, height: 28, borderRadius: 14, backgroundColor: colors.textPrimary, elevation: 2, shadowColor: colors.voidBlack, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 2 },
 });
 
 // ─── Brightness Slider Card (0–180% Safe Extended) ─────────────

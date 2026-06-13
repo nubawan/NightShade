@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   activeBadgeText: {
-    color: '#FFFFFF',
+    color: colors.voidBlack,
     ...T.labelS,
     fontWeight: '700',
   },
@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   applyText: {
-    color: '#FFFFFF',
+    color: colors.voidBlack,
     fontWeight: '700',
     ...T.labelM,
   },

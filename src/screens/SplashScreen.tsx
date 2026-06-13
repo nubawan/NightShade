@@ -1,5 +1,12 @@
+/**
+ * NightShade Revamp — Splash Screen
+ * Void Architecture design tokens. No emoji. Honest copy.
+ */
+
 import React, { useEffect } from 'react';
 import { View, Text, ActivityIndicator, StyleSheet, Animated } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { colors, S, T, R, ANIM } from '../theme';
 import { checkOverlayPermission } from '../utils/helpers';
 import { storageService } from '../services/StorageService';
@@ -16,6 +23,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({
 }) => {
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
   const scaleAnim = React.useRef(new Animated.Value(0.8)).current;
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     // Logo entrance animation
@@ -48,13 +56,12 @@ const SplashScreen: React.FC<SplashScreenProps> = ({
           try {
             await overlayService.update(settings);
           } catch (e) {
-            console.error('Failed to restore overlay on boot:', e);
+            // Restore may fail if service was killed
           }
         }
 
         onPermissionGranted();
       } catch (e) {
-        console.error('Splash initialization error:', e);
         onPermissionDenied();
       }
     };
@@ -64,34 +71,35 @@ const SplashScreen: React.FC<SplashScreenProps> = ({
   }, [onPermissionGranted, onPermissionDenied, fadeAnim, scaleAnim]);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[ss.root, { backgroundColor: colors.voidBlack, paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <Animated.View
         style={[
-          styles.logoContainer,
+          ss.logoContainer,
           {
             opacity: fadeAnim,
             transform: [{ scale: scaleAnim }],
           },
         ]}>
-        <View style={[styles.logoCircle, { backgroundColor: colors.primaryContainer }]}>
-          <Text style={styles.logoIcon}>🌙</Text>
+        {/* Icon — no emoji, use MaterialCommunityIcons iris mark */}
+        <View style={[ss.logoCircle, { backgroundColor: colors.voidMid, borderColor: colors.voidRim }]}>
+          <Icon name="moon-waning-crescent" size={44} color={colors.accentAmber} />
         </View>
-        <Text style={[styles.title, { color: colors.onSurface }]}>NightShade</Text>
-        <Text style={[styles.subtitle, { color: colors.onSurfaceVariant }]}>
-          Screen Filter & Eye Comfort
+        <Text style={ss.title}>NightShade</Text>
+        <Text style={ss.subtitle}>
+          Precision screen filter
         </Text>
       </Animated.View>
       <ActivityIndicator
         size="large"
-        color={colors.primary}
-        style={styles.loader}
+        color={colors.accentAmber}
+        style={ss.loader}
       />
     </View>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
+const ss = StyleSheet.create({
+  root: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
@@ -106,17 +114,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: S.s6,
-  },
-  logoIcon: {
-    fontSize: 44,
+    borderWidth: 1,
   },
   title: {
-    ...T.headline,
-    fontWeight: '700',
+    ...T.displayLg,
+    color: colors.textPrimary,
+    fontWeight: '300',
+    letterSpacing: -1,
     marginBottom: S.s1,
   },
   subtitle: {
-    ...T.bodyM,
+    ...T.bodySm,
+    color: colors.textMuted,
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
     marginBottom: S.s16,
   },
   loader: {

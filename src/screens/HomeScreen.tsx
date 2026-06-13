@@ -14,6 +14,7 @@ import {
   StyleSheet,
   Animated,
   Alert,
+  Linking,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Slider from '@react-native-community/slider';
@@ -77,7 +78,17 @@ const HomeScreen: React.FC<Props> = ({ onCreateFilter, onColorPicker }) => {
         useNativeDriver: true,
       }),
     ]).start();
-    await overlayStore.toggle();
+    const ok = await overlayStore.toggle();
+    if (!ok) {
+      Alert.alert(
+        'Overlay Permission Required',
+        'NightShade needs "Display over other apps" permission to work. Open Settings → Apps → NightShade → Permissions.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Open Settings', onPress: () => Linking.openSettings() },
+        ],
+      );
+    }
     save();
   }, [heroScale, save]);
 
@@ -92,7 +103,17 @@ const HomeScreen: React.FC<Props> = ({ onCreateFilter, onColorPicker }) => {
   }, [save]);
 
   const applyPreset = useCallback(async (p: FilterPreset) => {
-    await overlayStore.applyPreset(p.id, p.opacity, p.color);
+    const ok = await overlayStore.applyPreset(p.id, p.opacity, p.color);
+    if (!ok) {
+      Alert.alert(
+        'Overlay Permission Required',
+        'NightShade needs "Display over other apps" permission to work. Open Settings → Apps → NightShade → Permissions.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Open Settings', onPress: () => Linking.openSettings() },
+        ],
+      );
+    }
     save();
   }, [save]);
 
@@ -425,7 +446,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     lineHeight: T.labelLg.line,
     letterSpacing: T.labelLg.letterSpacing,
-    color: '#FFFFFF',
+    color: colors.textPrimary,
     textTransform: 'uppercase',
   },
 

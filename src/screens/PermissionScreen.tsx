@@ -1,3 +1,10 @@
+/**
+ * NightShade Revamp — Permission Screen
+ * Void Architecture design tokens. No emoji. Honest copy.
+ * Spec: "NightShade draws a color filter over your screen.
+ *        It needs permission to appear over other apps."
+ */
+
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -8,7 +15,9 @@ import {
   Alert,
   Animated,
 } from 'react-native';
-import { colors, S, T, R, ANIM } from '../theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { colors, S, T, R, ANIM, E } from '../theme';
 import { checkOverlayPermission, requestOverlayPermission } from '../utils/helpers';
 
 interface PermissionScreenProps {
@@ -18,6 +27,7 @@ interface PermissionScreenProps {
 const PermissionScreen: React.FC<PermissionScreenProps> = ({ onPermissionGranted }) => {
   const [checking, setChecking] = useState(false);
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -41,7 +51,7 @@ const PermissionScreen: React.FC<PermissionScreenProps> = ({ onPermissionGranted
     } catch {
       Alert.alert(
         'Permission Required',
-        'Please grant the "Display over other apps" permission for NightShade.',
+        'Overlay permission required. Open Settings → Apps → NightShade → Permissions.',
         [
           { text: 'Cancel', style: 'cancel' },
           { text: 'Open Settings', onPress: () => Linking.openSettings() },
@@ -53,60 +63,72 @@ const PermissionScreen: React.FC<PermissionScreenProps> = ({ onPermissionGranted
   };
 
   return (
-    <Animated.View style={[styles.container, { backgroundColor: colors.background, opacity: fadeAnim }]}>
-      <View style={styles.content}>
-        <View style={[styles.iconCircle, { backgroundColor: colors.primaryContainer }]}>
-          <Text style={styles.icon}>🛡️</Text>
+    <Animated.View style={[ps.root, { backgroundColor: colors.voidBlack, opacity: fadeAnim }]}>
+      <View style={[ps.content, { paddingTop: insets.top + S.s16, paddingBottom: insets.bottom + S.s8 }]}>
+        {/* Icon — no emoji, use MaterialCommunityIcons shield */}
+        <View style={[ps.iconCircle, { backgroundColor: colors.voidMid, borderColor: colors.voidRim }]}>
+          <Icon name="shield-lock-outline" size={36} color={colors.accentAmber} />
         </View>
-        <Text style={[styles.title, { color: colors.onSurface }]}>Permission Required</Text>
-        <Text style={[styles.description, { color: colors.onSurfaceVariant }]}>
-          NightShade needs the "Display over other apps" permission to draw a screen
-          filter overlay on top of all applications. This enables the brightness
-          reduction and color filter to work across your entire device.
+
+        {/* Title — honest and direct */}
+        <Text style={ps.title}>Overlay Permission</Text>
+
+        {/* Single-sentence pitch per spec */}
+        <Text style={ps.description}>
+          NightShade draws a color filter over your screen. It needs permission to appear over other apps.
         </Text>
 
-        <View style={[styles.stepsCard, { backgroundColor: colors.surfaceContainer }]}>
-          <Text style={[styles.stepsTitle, { color: colors.onSurface }]}>How to grant permission:</Text>
-          <Text style={[styles.step, { color: colors.onSurfaceVariant }]}>
-            1. Tap "Grant Permission" below
-          </Text>
-          <Text style={[styles.step, { color: colors.onSurfaceVariant }]}>
-            2. Find "NightShade" in the list
-          </Text>
-          <Text style={[styles.step, { color: colors.onSurfaceVariant }]}>
-            3. Toggle "Allow display over other apps"
-          </Text>
-          <Text style={[styles.step, { color: colors.onSurfaceVariant }]}>
-            4. Return to this app
-          </Text>
+        {/* Steps — compact, no fluff */}
+        <View style={[ps.stepsCard, { backgroundColor: colors.voidDeep, borderColor: colors.voidRim }]}>
+          <Text style={ps.stepsTitle}>HOW TO GRANT</Text>
+          <View style={ps.stepRow}>
+            <Text style={ps.stepNum}>1</Text>
+            <Text style={ps.stepText}>Tap "Grant Permission" below</Text>
+          </View>
+          <View style={ps.stepRow}>
+            <Text style={ps.stepNum}>2</Text>
+            <Text style={ps.stepText}>Find "NightShade" in the list</Text>
+          </View>
+          <View style={ps.stepRow}>
+            <Text style={ps.stepNum}>3</Text>
+            <Text style={ps.stepText}>Toggle "Allow display over other apps"</Text>
+          </View>
+          <View style={ps.stepRow}>
+            <Text style={ps.stepNum}>4</Text>
+            <Text style={ps.stepText}>Return to this app</Text>
+          </View>
         </View>
 
+        {/* Grant button — pill shape, accent amber */}
         <TouchableOpacity
-          style={[styles.grantButton, { backgroundColor: colors.primary }]}
+          style={[ps.grantButton, { backgroundColor: colors.accentAmber }, E.elevation1]}
           onPress={handleRequest}
           disabled={checking}
           accessibilityLabel="Grant overlay permission"
-          accessibilityRole="button">
-          <Text style={styles.grantButtonText}>
+          accessibilityRole="button"
+          activeOpacity={0.8}
+        >
+          <Text style={ps.grantButtonText}>
             {checking ? 'Checking...' : 'Grant Permission'}
           </Text>
         </TouchableOpacity>
 
+        {/* Secondary — open settings directly */}
         <TouchableOpacity
-          style={[styles.settingsButton, { backgroundColor: colors.surfaceContainerHigh }]}
+          style={[ps.settingsButton, { backgroundColor: colors.voidMid, borderColor: colors.voidRim }]}
           onPress={() => Linking.openSettings()}
-          accessibilityLabel="Open app settings">
-          <Text style={[styles.settingsButtonText, { color: colors.primary }]}>
-            Open App Settings
-          </Text>
+          accessibilityLabel="Open app settings"
+          activeOpacity={0.7}
+        >
+          <Text style={ps.settingsButtonText}>Open App Settings</Text>
         </TouchableOpacity>
       </View>
     </Animated.View>
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1 },
+const ps = StyleSheet.create({
+  root: { flex: 1 },
   content: {
     flex: 1,
     justifyContent: 'center',
@@ -120,18 +142,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: S.s6,
+    borderWidth: 1,
   },
-  icon: { fontSize: 36 },
   title: {
-    ...T.titleL,
+    ...T.heading1,
+    color: colors.textPrimary,
     fontWeight: '700',
     marginBottom: S.s3,
     textAlign: 'center',
   },
   description: {
-    ...T.bodyM,
+    ...T.bodyLg,
+    color: colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 22,
+    lineHeight: 24,
     marginBottom: S.s6,
   },
   stepsCard: {
@@ -139,20 +163,34 @@ const styles = StyleSheet.create({
     padding: S.s4,
     width: '100%',
     marginBottom: S.s8,
+    borderWidth: 1,
   },
   stepsTitle: {
-    ...T.titleS,
-    fontWeight: '600',
-    marginBottom: S.s2,
+    ...T.labelLg,
+    color: colors.textMuted,
+    marginBottom: S.s3,
+    textTransform: 'uppercase',
   },
-  step: {
-    ...T.bodyM,
-    lineHeight: 24,
-    paddingLeft: S.s2,
+  stepRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: S.s3,
+    paddingVertical: S.s1,
+  },
+  stepNum: {
+    ...T.labelLg,
+    color: colors.accentAmber,
+    fontWeight: '700',
+    width: 20,
+    textAlign: 'center',
+  },
+  stepText: {
+    ...T.bodySm,
+    color: colors.textSecondary,
   },
   grantButton: {
-    borderRadius: R.radiusXl,
-    paddingVertical: S.s3,
+    borderRadius: R.radiusPill,
+    paddingVertical: S.s4,
     paddingHorizontal: S.s8,
     width: '100%',
     alignItems: 'center',
@@ -161,21 +199,23 @@ const styles = StyleSheet.create({
     marginBottom: S.s3,
   },
   grantButtonText: {
-    color: '#FFFFFF',
-    ...T.labelL,
+    ...T.labelLg,
+    color: colors.voidBlack,
     fontWeight: '700',
   },
   settingsButton: {
-    borderRadius: R.radiusXl,
+    borderRadius: R.radiusPill,
     paddingVertical: S.s3,
     paddingHorizontal: S.s8,
     width: '100%',
     alignItems: 'center',
     minHeight: 48,
     justifyContent: 'center',
+    borderWidth: 1,
   },
   settingsButtonText: {
-    ...T.labelL,
+    ...T.labelLg,
+    color: colors.accentAmber,
     fontWeight: '600',
   },
 });
