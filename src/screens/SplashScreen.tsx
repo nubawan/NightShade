@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
-import { View, Text, ActivityIndicator, StyleSheet, Animated, useColorScheme } from 'react-native';
-import { getThemeColors, Spacing, Typography, Shape, Animation } from '../theme';
+import { View, Text, ActivityIndicator, StyleSheet, Animated } from 'react-native';
+import { colors, S, T, R, ANIM } from '../theme';
 import { checkOverlayPermission } from '../utils/helpers';
 import { storageService } from '../services/StorageService';
 import { overlayService } from '../services/OverlayService';
@@ -14,8 +14,6 @@ const SplashScreen: React.FC<SplashScreenProps> = ({
   onPermissionGranted,
   onPermissionDenied,
 }) => {
-  const systemDark = useColorScheme() === 'dark';
-  const colors = getThemeColors('system', systemDark);
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
   const scaleAnim = React.useRef(new Animated.Value(0.8)).current;
 
@@ -24,13 +22,13 @@ const SplashScreen: React.FC<SplashScreenProps> = ({
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: Animation.durationSlow,
+        duration: ANIM.slow,
         useNativeDriver: true,
       }),
       Animated.spring(scaleAnim, {
         toValue: 1,
-        damping: Animation.springDamping,
-        stiffness: Animation.springStiffness,
+        damping: ANIM.spring.damping,
+        stiffness: ANIM.spring.stiffness,
         useNativeDriver: true,
       }),
     ]).start();
@@ -48,7 +46,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({
 
         if (autoStart && settings.enabled) {
           try {
-            await overlayService.updateOverlay(settings);
+            await overlayService.update(settings);
           } catch (e) {
             console.error('Failed to restore overlay on boot:', e);
           }
@@ -107,22 +105,22 @@ const styles = StyleSheet.create({
     borderRadius: 48,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: Spacing.xl,
+    marginBottom: S.s6,
   },
   logoIcon: {
     fontSize: 44,
   },
   title: {
-    ...Typography.headlineMedium,
+    ...T.headline,
     fontWeight: '700',
-    marginBottom: Spacing.xs,
+    marginBottom: S.s1,
   },
   subtitle: {
-    ...Typography.bodyMedium,
-    marginBottom: Spacing.xxxl,
+    ...T.bodyM,
+    marginBottom: S.s16,
   },
   loader: {
-    marginTop: Spacing.huge,
+    marginTop: S.s12,
   },
 });
 

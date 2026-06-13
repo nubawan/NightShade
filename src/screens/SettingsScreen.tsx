@@ -37,7 +37,7 @@ const SectionLabel: React.FC<{ label: string }> = ({ label }) => (
 // Setting row — label on left, control on right, 52dp min height
 const SettingRow: React.FC<{
   label: string;
-  children: React.ReactNode;
+  children?: React.ReactNode;
   onPress?: () => void;
   showChevron?: boolean;
 }> = ({ label, children, onPress, showChevron }) => (

@@ -71,7 +71,7 @@ export const Switch: React.FC<{
 
 const sw = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: S.s12, paddingVertical: S.s2 },
-  label: { ...T.bodyL, fontWeight: '500', flex: 1, marginRight: S.s4 },
+  label: { ...T.bodyLg, fontWeight: '500', flex: 1, marginRight: S.s4 },
   track: { width: 52, height: 32, borderRadius: 16, justifyContent: 'center', paddingHorizontal: 2 },
   thumb: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#FFF', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 2 },
 });

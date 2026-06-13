@@ -7,9 +7,8 @@ import {
   Linking,
   Alert,
   Animated,
-  useColorScheme,
 } from 'react-native';
-import { getThemeColors, Spacing, Typography, Shape, Animation } from '../theme';
+import { colors, S, T, R, ANIM } from '../theme';
 import { checkOverlayPermission, requestOverlayPermission } from '../utils/helpers';
 
 interface PermissionScreenProps {
@@ -18,14 +17,12 @@ interface PermissionScreenProps {
 
 const PermissionScreen: React.FC<PermissionScreenProps> = ({ onPermissionGranted }) => {
   const [checking, setChecking] = useState(false);
-  const systemDark = useColorScheme() === 'dark';
-  const colors = getThemeColors('system', systemDark);
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
       toValue: 1,
-      duration: Animation.durationSlow,
+      duration: ANIM.slow,
       useNativeDriver: true,
     }).start();
 
@@ -114,7 +111,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: Spacing.xxl,
+    paddingHorizontal: S.s8,
   },
   iconCircle: {
     width: 80,
@@ -122,63 +119,63 @@ const styles = StyleSheet.create({
     borderRadius: 40,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: Spacing.xl,
+    marginBottom: S.s6,
   },
   icon: { fontSize: 36 },
   title: {
-    ...Typography.headlineSmall,
+    ...T.titleL,
     fontWeight: '700',
-    marginBottom: Spacing.md,
+    marginBottom: S.s3,
     textAlign: 'center',
   },
   description: {
-    ...Typography.bodyMedium,
+    ...T.bodyM,
     textAlign: 'center',
     lineHeight: 22,
-    marginBottom: Spacing.xl,
+    marginBottom: S.s6,
   },
   stepsCard: {
-    borderRadius: Shape.lg,
-    padding: Spacing.lg,
+    borderRadius: R.radiusLg,
+    padding: S.s4,
     width: '100%',
-    marginBottom: Spacing.xxl,
+    marginBottom: S.s8,
   },
   stepsTitle: {
-    ...Typography.titleSmall,
+    ...T.titleS,
     fontWeight: '600',
-    marginBottom: Spacing.sm,
+    marginBottom: S.s2,
   },
   step: {
-    ...Typography.bodyMedium,
+    ...T.bodyM,
     lineHeight: 24,
-    paddingLeft: Spacing.sm,
+    paddingLeft: S.s2,
   },
   grantButton: {
-    borderRadius: Shape.xl,
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.xxl,
+    borderRadius: R.radiusXl,
+    paddingVertical: S.s3,
+    paddingHorizontal: S.s8,
     width: '100%',
     alignItems: 'center',
     minHeight: 52,
     justifyContent: 'center',
-    marginBottom: Spacing.md,
+    marginBottom: S.s3,
   },
   grantButtonText: {
     color: '#FFFFFF',
-    ...Typography.labelLarge,
+    ...T.labelL,
     fontWeight: '700',
   },
   settingsButton: {
-    borderRadius: Shape.xl,
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.xxl,
+    borderRadius: R.radiusXl,
+    paddingVertical: S.s3,
+    paddingHorizontal: S.s8,
     width: '100%',
     alignItems: 'center',
     minHeight: 48,
     justifyContent: 'center',
   },
   settingsButtonText: {
-    ...Typography.labelLarge,
+    ...T.labelL,
     fontWeight: '600',
   },
 });

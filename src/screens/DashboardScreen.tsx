@@ -6,13 +6,12 @@ import {
   StyleSheet,
   TouchableOpacity,
   Animated,
-  useColorScheme,
 } from 'react-native';
 import Toggle from '../components/Toggle';
 import { BrightnessCard } from '../components/AppComponents';
 import ColorSelector from '../components/ColorSelector';
 import PresetChip from '../components/PresetChip';
-import { getThemeColors, Spacing, Typography, Shape, Animation } from '../theme';
+import { colors, S, T, R, ANIM } from '../theme';
 import { OverlaySettings, Preset } from '../types';
 import { overlayService } from '../services/OverlayService';
 import { storageService } from '../services/StorageService';
@@ -38,8 +37,6 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({
   const [activePresetName, setActivePresetName] = useState<string | null>(null);
   const [quickPresets, setQuickPresets] = useState<Preset[]>([]);
   const [loading, setLoading] = useState(true);
-  const systemDark = useColorScheme() === 'dark';
-  const colors = getThemeColors('system', systemDark);
 
   // Animation refs
   const cardScaleAnim = useRef(new Animated.Value(1)).current;
@@ -49,7 +46,7 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({
     const load = async () => {
       try {
         const saved = await storageService.getOverlaySettings();
-        const isEnabled = await overlayService.isOverlayEnabled();
+        const isEnabled = await overlayService.isEnabled();
         setSettings({ ...saved, enabled: isEnabled });
         if (saved.presetId) {
           const presets = await storageService.getPresets();
@@ -64,7 +61,7 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({
         setLoading(false);
         Animated.timing(statusFadeAnim, {
           toValue: 1,
-          duration: Animation.durationMedium,
+          duration: ANIM.normal,
           useNativeDriver: true,
         }).start();
       }
@@ -94,19 +91,19 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({
       }),
       Animated.spring(cardScaleAnim, {
         toValue: 1,
-        damping: Animation.springDamping,
+        damping: ANIM.spring.damping,
         useNativeDriver: true,
       }),
     ]).start();
 
     try {
       if (newEnabled) {
-        await overlayService.updateOverlay({ ...settings, enabled: true });
+        await overlayService.update({ ...settings, enabled: true });
       } else {
-        await overlayService.disableOverlay();
+        await overlayService.disable();
       }
       setSettings(prev => ({ ...prev, enabled: newEnabled }));
-      await overlayService.updateTileState(newEnabled);
+      await overlayService.updateTile(newEnabled);
     } catch (e) {
       console.error('Toggle overlay failed:', e);
     }
@@ -146,8 +143,8 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({
         color: preset.color,
         presetId: preset.id,
       };
-      await overlayService.updateOverlay(newSettings);
-      await overlayService.updateTileState(true);
+      await overlayService.update(newSettings);
+      await overlayService.updateTile(true);
       setSettings(newSettings);
       setActivePresetName(preset.name);
     } catch (e) {
@@ -284,9 +281,9 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({
 const styles = StyleSheet.create({
   container: { flex: 1 },
   content: {
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.huge,
+    paddingHorizontal: S.s4,
+    paddingTop: S.s3,
+    paddingBottom: S.s12,
   },
   loadingContainer: {
     flex: 1,
@@ -295,9 +292,9 @@ const styles = StyleSheet.create({
   },
   // Hero Card
   heroCard: {
-    borderRadius: Shape.xl,
-    padding: Spacing.xl,
-    marginBottom: Spacing.sm,
+    borderRadius: R.radiusXl,
+    padding: S.s6,
+    marginBottom: S.s2,
   },
   heroRow: {
     flexDirection: 'row',
@@ -306,33 +303,33 @@ const styles = StyleSheet.create({
   },
   heroInfo: { flex: 1 },
   heroTitle: {
-    ...Typography.headlineSmall,
+    ...T.titleL,
     fontWeight: '700',
   },
   heroStatus: {
-    ...Typography.bodyMedium,
+    ...T.bodyM,
     marginTop: 2,
   },
   heroDetails: {
     flexDirection: 'row',
-    marginTop: Spacing.lg,
-    paddingTop: Spacing.lg,
+    marginTop: S.s4,
+    paddingTop: S.s4,
     borderTopWidth: 1,
   },
   detailItem: { flex: 1 },
-  detailDivider: { width: 1, marginHorizontal: Spacing.lg },
+  detailDivider: { width: 1, marginHorizontal: S.s4 },
   detailLabel: {
-    ...Typography.labelSmall,
+    ...T.labelS,
     marginBottom: 2,
   },
   detailValue: {
-    ...Typography.titleMedium,
+    ...T.titleM,
     fontWeight: '600',
   },
   detailColorRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.xs,
+    gap: S.s1,
   },
   detailColorDot: {
     width: 12,
@@ -343,45 +340,45 @@ const styles = StyleSheet.create({
   },
   // Presets
   presetsCard: {
-    borderRadius: Shape.lg,
-    padding: Spacing.lg,
-    marginVertical: Spacing.xs,
+    borderRadius: R.radiusLg,
+    padding: S.s4,
+    marginVertical: S.s1,
   },
   presetsHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing.md,
+    marginBottom: S.s3,
   },
   sectionTitle: {
-    ...Typography.titleMedium,
+    ...T.titleM,
     fontWeight: '600',
   },
   seeAll: {
-    ...Typography.labelMedium,
+    ...T.labelM,
     fontWeight: '600',
   },
   chipsRow: {
-    gap: Spacing.sm,
+    gap: S.s2,
   },
   // Quick Actions
   quickActions: {
     flexDirection: 'row',
-    gap: Spacing.md,
-    marginTop: Spacing.sm,
+    gap: S.s3,
+    marginTop: S.s2,
   },
   actionCard: {
     flex: 1,
-    borderRadius: Shape.lg,
-    padding: Spacing.lg,
+    borderRadius: R.radiusLg,
+    padding: S.s4,
     alignItems: 'center',
-    gap: Spacing.sm,
+    gap: S.s2,
     minHeight: 80,
     justifyContent: 'center',
   },
   actionIcon: { fontSize: 24 },
   actionLabel: {
-    ...Typography.labelMedium,
+    ...T.labelM,
     fontWeight: '500',
   },
 });

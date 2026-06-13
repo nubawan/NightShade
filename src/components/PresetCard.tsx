@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert, useColorScheme } from 'react-native';
-import { getThemeColors, Spacing, Typography, Shape, Animation } from '../theme';
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { colors, S, T, R, ANIM } from '../theme';
 import { Preset } from '../types';
 import { opacityToPercent } from '../utils/helpers';
 
@@ -19,8 +19,6 @@ const PresetCard: React.FC<PresetCardProps> = ({
   onDelete,
   isActive,
 }) => {
-  const systemDark = useColorScheme() === 'dark';
-  const colors = getThemeColors('system', systemDark);
 
   const handleDelete = () => {
     if (preset.isBuiltIn) {
@@ -103,21 +101,21 @@ const PresetCard: React.FC<PresetCardProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: Shape.lg,
-    padding: Spacing.lg,
-    marginVertical: Spacing.xs,
+    borderRadius: R.radiusLg,
+    padding: S.s4,
+    marginVertical: S.s1,
     borderWidth: 2,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing.md,
+    marginBottom: S.s3,
   },
   info: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.md,
+    gap: S.s3,
   },
   colorDot: {
     width: 44,
@@ -129,30 +127,30 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   name: {
-    ...Typography.titleSmall,
+    ...T.titleS,
     fontWeight: '600',
   },
   detail: {
-    ...Typography.bodySmall,
+    ...T.bodyS,
   },
   activeBadge: {
-    borderRadius: Shape.sm,
-    paddingHorizontal: Spacing.sm,
+    borderRadius: R.radiusSm,
+    paddingHorizontal: S.s2,
     paddingVertical: 2,
   },
   activeBadgeText: {
     color: '#FFFFFF',
-    ...Typography.labelSmall,
+    ...T.labelS,
     fontWeight: '700',
   },
   actions: {
     flexDirection: 'row',
-    gap: Spacing.sm,
+    gap: S.s2,
   },
   actionBtn: {
     flex: 1,
-    paddingVertical: Spacing.sm,
-    borderRadius: Shape.sm,
+    paddingVertical: S.s2,
+    borderRadius: R.radiusSm,
     alignItems: 'center',
     minHeight: 44, // Accessibility
     justifyContent: 'center',
@@ -160,15 +158,15 @@ const styles = StyleSheet.create({
   applyText: {
     color: '#FFFFFF',
     fontWeight: '700',
-    ...Typography.labelMedium,
+    ...T.labelM,
   },
   editText: {
     fontWeight: '600',
-    ...Typography.labelMedium,
+    ...T.labelM,
   },
   deleteText: {
     fontWeight: '600',
-    ...Typography.labelMedium,
+    ...T.labelM,
   },
 });
 

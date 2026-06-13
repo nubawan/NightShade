@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, useColorScheme } from 'react-native';
-import { getThemeColors, Spacing, Typography, Shape } from '../theme';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { colors, S, T, R } from '../theme';
 import { Preset } from '../types';
 
 interface PresetChipProps {
@@ -10,8 +10,6 @@ interface PresetChipProps {
 }
 
 const PresetChip: React.FC<PresetChipProps> = ({ preset, isActive, onPress }) => {
-  const systemDark = useColorScheme() === 'dark';
-  const colors = getThemeColors('system', systemDark);
 
   return (
     <TouchableOpacity
@@ -48,11 +46,11 @@ const styles = StyleSheet.create({
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: Shape.xl,
+    paddingHorizontal: S.s3,
+    paddingVertical: S.s2,
+    borderRadius: R.radiusXl,
     borderWidth: 1,
-    gap: Spacing.xs,
+    gap: S.s1,
     minHeight: 40,
   },
   chipDot: {
@@ -61,7 +59,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   chipText: {
-    ...Typography.labelMedium,
+    ...T.labelM,
     fontWeight: '500',
   },
 });

@@ -8,7 +8,7 @@ export async function checkOverlayPermission(): Promise<boolean> {
   if (Platform.OS !== 'android') {
     return false;
   }
-  return overlayService.hasOverlayPermission();
+  return overlayService.hasPermission();
 }
 
 /**
@@ -19,7 +19,7 @@ export async function requestOverlayPermission(): Promise<void> {
     return;
   }
   try {
-    await overlayService.requestOverlayPermission();
+    await overlayService.requestPermission();
   } catch (e) {
     // Fallback: open app settings directly
     Linking.openSettings();

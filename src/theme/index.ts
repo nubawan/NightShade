@@ -11,6 +11,9 @@
 
 import { AppTheme } from '../types';
 
+// Re-export ColorModes from colors.ts
+export { ColorModes } from './colors';
+
 // ─── Void Architecture — Core Color Tokens ─────────────────────────
 
 export const colors = {

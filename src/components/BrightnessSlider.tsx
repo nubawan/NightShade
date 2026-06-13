@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, useColorScheme } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import Slider from '@react-native-community/slider';
-import { getThemeColors, Spacing, Typography, Shape, Animation } from '../theme';
+import { colors, S, T, R, ANIM } from '../theme';
 import { opacityToPercent, debounce, getBrightnessLabel } from '../utils/helpers';
 
 interface BrightnessSliderProps {
@@ -17,8 +17,6 @@ const BrightnessSlider: React.FC<BrightnessSliderProps> = ({
   onSlidingComplete,
   label = 'Brightness',
 }) => {
-  const systemDark = useColorScheme() === 'dark';
-  const colors = getThemeColors('system', systemDark);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.surfaceContainer }]}>
@@ -57,27 +55,27 @@ const BrightnessSlider: React.FC<BrightnessSliderProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: Shape.lg,
-    padding: Spacing.lg,
-    marginVertical: Spacing.xs,
+    borderRadius: R.radiusLg,
+    padding: S.s4,
+    marginVertical: S.s1,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing.md,
+    marginBottom: S.s3,
   },
   title: {
-    ...Typography.titleMedium,
+    ...T.titleM,
   },
   value: {
-    ...Typography.titleMedium,
+    ...T.titleM,
     fontWeight: '700',
   },
   sliderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
+    gap: S.s2,
   },
   iconSun: {
     fontSize: 16,
@@ -95,7 +93,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   labelText: {
-    ...Typography.labelSmall,
+    ...T.labelS,
   },
 });
 

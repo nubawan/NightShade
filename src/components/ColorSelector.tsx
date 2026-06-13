@@ -1,8 +1,7 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, useColorScheme } from 'react-native';
-import { getThemeColors, Spacing, Typography, Shape, Animation } from '../theme';
-import { ColorModes } from '../theme';
-import { ColorMode } from '../types';
+import { View, Text, TouchableOpacity, StyleSheet, FlatList } from 'react-native';
+import { colors, S, T, R, ANIM, ColorModes } from '../theme';
+
 
 interface ColorSelectorProps {
   selectedColor: string;
@@ -15,8 +14,6 @@ const ColorSelector: React.FC<ColorSelectorProps> = ({
   onSelectColor,
   onCustomPress,
 }) => {
-  const systemDark = useColorScheme() === 'dark';
-  const colors = getThemeColors('system', systemDark);
 
   const renderColorItem = ({ item }: { item: typeof ColorModes[number] }) => {
     const isSelected = selectedColor === item.color;
@@ -85,21 +82,21 @@ const ColorSelector: React.FC<ColorSelectorProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: Shape.lg,
-    padding: Spacing.lg,
-    marginVertical: Spacing.xs,
+    borderRadius: R.radiusLg,
+    padding: S.s4,
+    marginVertical: S.s1,
   },
   title: {
-    ...Typography.titleMedium,
-    marginBottom: Spacing.md,
+    ...T.titleM,
+    marginBottom: S.s3,
   },
   list: {
-    gap: Spacing.sm,
+    gap: S.s2,
   },
   colorItem: {
     alignItems: 'center',
-    padding: Spacing.md,
-    borderRadius: Shape.md,
+    padding: S.s3,
+    borderRadius: R.radiusMd,
     borderWidth: 2,
     minWidth: 68,
     minHeight: 80, // Accessibility: larger touch target
@@ -110,10 +107,10 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     borderWidth: 2,
     borderColor: 'rgba(255,255,255,0.2)',
-    marginBottom: Spacing.xs,
+    marginBottom: S.s1,
   },
   colorLabel: {
-    ...Typography.labelSmall,
+    ...T.labelS,
     fontWeight: '600',
   },
 });

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated, useColorScheme } from 'react-native';
-import { getThemeColors, Spacing, Typography, Shape, Animation } from '../theme';
+import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
+import { colors, S, T, R, ANIM } from '../theme';
 
 interface ToggleProps {
   enabled: boolean;
@@ -11,13 +11,12 @@ interface ToggleProps {
 
 const Toggle: React.FC<ToggleProps> = ({ enabled, onToggle, label, accessibilityLabel }) => {
   const animatedValue = useRef(new Animated.Value(enabled ? 1 : 0)).current;
-  const systemDark = useColorScheme() === 'dark';
-  const colors = getThemeColors('system', systemDark);
+
 
   useEffect(() => {
     Animated.timing(animatedValue, {
       toValue: enabled ? 1 : 0,
-      duration: Animation.durationMedium,
+      duration: ANIM.normal,
       useNativeDriver: false,
     }).start();
   }, [enabled, animatedValue]);
@@ -60,10 +59,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     minHeight: 48, // Accessibility: minimum touch target
-    paddingVertical: Spacing.sm,
+    paddingVertical: S.s2,
   },
   label: {
-    ...Typography.bodyLarge,
+    ...T.bodyLg,
     fontWeight: '500',
     flex: 1,
   },

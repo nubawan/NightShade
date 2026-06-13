@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
-  Alert, Linking, useColorScheme,
+  Alert, Linking,
 } from 'react-native';
 import Toggle from '../components/Toggle';
-import { getThemeColors, Spacing, Typography, Shape } from '../theme';
+import { colors, S, T, R } from '../theme';
 import { storageService } from '../services/StorageService';
 import { overlayService } from '../services/OverlayService';
 import { openBatterySettings } from '../utils/helpers';
@@ -15,9 +15,6 @@ interface AdvancedSettingsScreenProps {
 }
 
 const AdvancedSettingsScreen: React.FC<AdvancedSettingsScreenProps> = ({ onBack }) => {
-  const systemDark = useColorScheme() === 'dark';
-  const colors = getThemeColors('system', systemDark);
-
   const [autoStart, setAutoStart] = useState(false);
   const [restoreFilter, setRestoreFilter] = useState(true);
   const [notificationControls, setNotificationControls] = useState(true);
@@ -27,7 +24,7 @@ const AdvancedSettingsScreen: React.FC<AdvancedSettingsScreenProps> = ({ onBack 
   useEffect(() => {
     (async () => {
       setAutoStart(await storageService.getAutoStart());
-      setRestoreFilter(await storageService.getRestorePreviousFilter());
+      setRestoreFilter(await storageService.getRestoreFilter());
       setNotificationControls(await storageService.getNotificationControls());
       setFloatingWidget(await storageService.getFloatingWidget());
       setAppTheme(await storageService.getAppTheme());
@@ -41,7 +38,7 @@ const AdvancedSettingsScreen: React.FC<AdvancedSettingsScreenProps> = ({ onBack 
 
   const handleRestoreFilter = async (val: boolean) => {
     setRestoreFilter(val);
-    await storageService.setRestorePreviousFilter(val);
+    await storageService.setRestoreFilter(val);
   };
 
   const handleNotification = async (val: boolean) => {
@@ -104,7 +101,7 @@ const AdvancedSettingsScreen: React.FC<AdvancedSettingsScreenProps> = ({ onBack 
                 accessibilityRole="radio"
                 accessibilityState={{ checked: appTheme === theme }}>
                 <Text style={{
-                  ...Typography.labelMedium,
+                  ...T.labelM,
                   fontWeight: '600',
                   color: appTheme === theme ? colors.onPrimary : colors.onSurfaceVariant,
                   textTransform: 'capitalize',
@@ -235,53 +232,53 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md, borderBottomWidth: 1,
+    paddingHorizontal: S.s4, paddingVertical: S.s3, borderBottomWidth: 1,
   },
-  backBtn: { padding: Spacing.sm, minHeight: 48, justifyContent: 'center' },
-  backText: { ...Typography.labelLarge, fontWeight: '600' },
-  headerTitle: { ...Typography.titleMedium, fontWeight: '700' },
+  backBtn: { padding: S.s2, minHeight: 48, justifyContent: 'center' },
+  backText: { ...T.labelL, fontWeight: '600' },
+  headerTitle: { ...T.titleM, fontWeight: '700' },
   headerSpacer: { width: 60 },
-  content: { paddingHorizontal: Spacing.lg, paddingTop: Spacing.lg, paddingBottom: Spacing.huge },
+  content: { paddingHorizontal: S.s4, paddingTop: S.s4, paddingBottom: S.s12 },
   sectionTitle: {
-    ...Typography.labelMedium, fontWeight: '700', textTransform: 'uppercase',
-    letterSpacing: 1, marginBottom: Spacing.sm,
+    ...T.labelM, fontWeight: '700', textTransform: 'uppercase',
+    letterSpacing: 1, marginBottom: S.s2,
   },
-  sectionDesc: { ...Typography.bodySmall, lineHeight: 18, marginBottom: Spacing.sm },
-  card: { borderRadius: Shape.lg, overflow: 'hidden' },
+  sectionDesc: { ...T.bodyS, lineHeight: 18, marginBottom: S.s2 },
+  card: { borderRadius: R.radiusLg, overflow: 'hidden' },
   settingRow: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    padding: Spacing.lg,
+    padding: S.s4,
   },
-  settingInfo: { flex: 1, marginRight: Spacing.lg },
-  settingName: { ...Typography.bodyLarge, fontWeight: '500', marginBottom: 2 },
-  settingDesc: { ...Typography.bodySmall, lineHeight: 18 },
-  divider: { height: 1, marginHorizontal: Spacing.lg },
-  themeRow: { flexDirection: 'row', gap: Spacing.sm, padding: Spacing.lg, paddingTop: Spacing.sm },
+  settingInfo: { flex: 1, marginRight: S.s4 },
+  settingName: { ...T.bodyLg, fontWeight: '500', marginBottom: 2 },
+  settingDesc: { ...T.bodyS, lineHeight: 18 },
+  divider: { height: 1, marginHorizontal: S.s4 },
+  themeRow: { flexDirection: 'row', gap: S.s2, padding: S.s4, paddingTop: S.s2 },
   themeOption: {
-    flex: 1, paddingVertical: Spacing.md, borderRadius: Shape.md, alignItems: 'center',
+    flex: 1, paddingVertical: S.s3, borderRadius: R.radiusMd, alignItems: 'center',
     borderWidth: 1, minHeight: 48, justifyContent: 'center',
   },
   comingSoonBadge: {
-    borderRadius: Shape.sm, paddingHorizontal: Spacing.md, paddingVertical: Spacing.xs,
+    borderRadius: R.radiusSm, paddingHorizontal: S.s3, paddingVertical: S.s1,
   },
-  comingSoonText: { ...Typography.labelSmall, fontWeight: '600' },
+  comingSoonText: { ...T.labelS, fontWeight: '600' },
   batteryRow: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md, minHeight: 52,
+    paddingHorizontal: S.s4, paddingVertical: S.s3, minHeight: 52,
   },
-  batteryName: { ...Typography.bodyMedium, fontWeight: '500' },
+  batteryName: { ...T.bodyM, fontWeight: '500' },
   batteryArrow: { fontSize: 16 },
   batteryBtn: {
-    borderRadius: Shape.md, paddingVertical: Spacing.md, alignItems: 'center',
-    marginTop: Spacing.sm, borderWidth: 1, minHeight: 48, justifyContent: 'center',
+    borderRadius: R.radiusMd, paddingVertical: S.s3, alignItems: 'center',
+    marginTop: S.s2, borderWidth: 1, minHeight: 48, justifyContent: 'center',
   },
-  batteryBtnText: { ...Typography.labelLarge, fontWeight: '600' },
+  batteryBtnText: { ...T.labelL, fontWeight: '600' },
   aboutRow: {
     flexDirection: 'row', justifyContent: 'space-between',
-    paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md,
+    paddingHorizontal: S.s4, paddingVertical: S.s3,
   },
-  aboutLabel: { ...Typography.bodyMedium },
-  aboutValue: { ...Typography.bodyMedium, fontWeight: '500' },
+  aboutLabel: { ...T.bodyM },
+  aboutValue: { ...T.bodyM, fontWeight: '500' },
 });
 
 export default AdvancedSettingsScreen;
