@@ -11,23 +11,19 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.view.*
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.TextView
 import com.screenfilterapp.MainActivity
+import com.screenfilterapp.R
 
 /**
  * NightShade V5 — Floating Bubble Service
+ * Revamped with Void Architecture design tokens.
  *
- * V5 Critical Fixes:
- * - Defensive WindowManager: try/catch on EVERY addView/removeView/updateViewLayout
- * - Never add a view that's already attached
- * - Never remove a view that's already detached
- * - Never update layout params on a detached view
- * - State sync: emits NightShadeStateUpdate after every change
- * - START_STICKY with auto-restart on task removal
- * - Position persistence across restarts
- * - SeekBar-based brightness control (0–200)
+ * G1: Bubble icon uses ic_bubble_nightshade (Iris Filter mark)
+ * G2: Panel background #0D0F14 (void-deep), text #F0F2F7, no glassmorphism
  */
 class FloatingBubbleService : Service() {
 
@@ -37,6 +33,20 @@ class FloatingBubbleService : Service() {
         const val ACTION_RESTORE = "com.screenfilterapp.BUBBLE_RESTORE"
         var isRunning = false
             private set
+
+        // Void Architecture color tokens (matching theme/index.ts)
+        private const val VOID_BLACK = 0xFF08090B.toInt()
+        private const val VOID_DEEP = 0xFF0D0F14.toInt()
+        private const val VOID_MID = 0xFF14171F.toInt()
+        private const val VOID_RIM = 0xFF1C2030.toInt()
+        private const val VOID_GHOST = 0xFF2A2E3E.toInt()
+        private const val TEXT_PRIMARY = 0xFFF0F2F7.toInt()
+        private const val TEXT_SECONDARY = 0xFF8A90A8.toInt()
+        private const val TEXT_MUTED = 0xFF4A5068.toInt()
+        private const val ACCENT_AMBER = 0xFFE8A040.toInt()
+        private const val ACCENT_AMBER_DIM = 0xFFA86820.toInt()
+        private const val STATUS_ON = 0xFF3DDC84.toInt()
+        private const val DANGER = 0xFFE85540.toInt()
     }
 
     private var windowManager: WindowManager? = null
@@ -50,7 +60,6 @@ class FloatingBubbleService : Service() {
     private var isMiniPanelAttached = false
 
     private var isDragging = false
-    private var isMiniPanelVisible = false
     private var initialX = 0
     private var initialY = 0
     private var initialTouchX = 0f
@@ -116,8 +125,6 @@ class FloatingBubbleService : Service() {
     }
 
     // ─── Safe WindowManager Helpers ──────────────────────────────
-    // Every WindowManager operation is wrapped in try/catch.
-    // We track attachment state to prevent double-add/double-remove.
 
     private fun safeAddView(view: View, params: WindowManager.LayoutParams): Boolean {
         return try {
@@ -132,21 +139,17 @@ class FloatingBubbleService : Service() {
         if (view == null) return
         try {
             windowManager?.removeView(view)
-        } catch (_: Exception) {
-            // View may already be removed or not attached
-        }
+        } catch (_: Exception) {}
     }
 
     private fun safeUpdateLayout(view: View?, params: WindowManager.LayoutParams?) {
         if (view == null || params == null) return
         try {
             windowManager?.updateViewLayout(view, params)
-        } catch (_: Exception) {
-            // View may have been removed
-        }
+        } catch (_: Exception) {}
     }
 
-    // ─── Bubble ──────────────────────────────────────────────────
+    // ─── Bubble (G1: Iris Filter icon) ─────────────────────────
 
     @SuppressLint("ClickableViewAccessibility")
     private fun showBubble() {
@@ -154,15 +157,10 @@ class FloatingBubbleService : Service() {
 
         isRunning = true
 
-        bubbleView = TextView(this).apply {
-            text = "🌙"
-            textSize = 20f
-            setPadding(14, 10, 14, 10)
-            background = GradientDrawable().apply {
-                shape = GradientDrawable.OVAL
-                setColor(0xFF1B2A60.toInt())  // Night Blue palette
-                setStroke(2, 0xFFB8C9FF.toInt())
-            }
+        // G1: Use the new Iris Filter bubble icon
+        bubbleView = ImageView(this).apply {
+            setImageResource(R.drawable.ic_bubble_nightshade)
+            setPadding(4, 4, 4, 4)
             elevation = 8f
         }
 
@@ -177,8 +175,7 @@ class FloatingBubbleService : Service() {
         val savedY = prefs.getInt("bubble_y", 200)
 
         bubbleParams = WindowManager.LayoutParams(
-            WindowManager.LayoutParams.WRAP_CONTENT,
-            WindowManager.LayoutParams.WRAP_CONTENT,
+            56, 56,  // Fixed size for bubble
             type,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             PixelFormat.TRANSLUCENT
@@ -259,7 +256,7 @@ class FloatingBubbleService : Service() {
         isBubbleAttached = false
     }
 
-    // ─── Mini Control Panel ──────────────────────────────────────
+    // ─── Mini Control Panel (G2: Void Architecture styling) ─────
 
     @SuppressLint("ClickableViewAccessibility")
     private fun showMiniPanel() {
@@ -273,36 +270,51 @@ class FloatingBubbleService : Service() {
         miniPanelView = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(24, 20, 24, 20)
+            // G2: Void-deep background, void-rim border — no glassmorphism
             background = GradientDrawable().apply {
                 shape = GradientDrawable.RECTANGLE
-                setColor(0xFF1D2029.toInt())  // Night Blue surface
+                setColor(VOID_DEEP)           // #0D0F14 — void-deep
                 cornerRadius = 16f
-                setStroke(1, 0xFFB8C9FF.toInt())
+                setStroke(1, VOID_RIM)        // #1C2030 — void-rim
             }
             elevation = 16f
 
-            // Header row: Toggle + Open App
+            // Header row: Toggle label + Open App
             val header = LinearLayout(context).apply {
                 orientation = LinearLayout.HORIZONTAL
                 gravity = Gravity.CENTER_VERTICAL
 
                 val toggleBtn = TextView(context).apply {
-                    text = if (OverlayService.currentEnabled) "🌙 Filter ON" else "☀️ Filter OFF"
-                    textSize = 16f
-                    setTextColor(0xFFB8C9FF.toInt())
+                    // G2: No emoji, honest copy per spec
+                    text = if (OverlayService.currentEnabled) "FILTER ON" else "FILTER OFF"
+                    textSize = 14f
+                    setTextColor(if (OverlayService.currentEnabled) STATUS_ON else TEXT_MUTED)
                     setPadding(0, 8, 16, 8)
                     setOnClickListener {
                         toggleFilter()
-                        text = if (OverlayService.currentEnabled) "🌙 Filter ON" else "☀️ Filter OFF"
+                        text = if (OverlayService.currentEnabled) "FILTER ON" else "FILTER OFF"
+                        setTextColor(if (OverlayService.currentEnabled) STATUS_ON else TEXT_MUTED)
                         resetAutoHide()
                     }
                 }
                 addView(toggleBtn)
 
+                // Spacer
+                addView(View(context).apply {
+                    layoutParams = LinearLayout.LayoutParams(0, 0, 1f)
+                })
+
                 val openBtn = TextView(context).apply {
-                    text = "📱"
-                    textSize = 18f
-                    setPadding(16, 8, 0, 8)
+                    text = "OPEN"
+                    textSize = 12f
+                    setTextColor(ACCENT_AMBER)
+                    setPadding(12, 6, 12, 6)
+                    background = GradientDrawable().apply {
+                        shape = GradientDrawable.RECTANGLE
+                        setColor(VOID_MID)
+                        cornerRadius = 12f
+                        setStroke(1, VOID_RIM)
+                    }
                     setOnClickListener {
                         openApp()
                         safeRemoveMiniPanel()
@@ -312,14 +324,31 @@ class FloatingBubbleService : Service() {
             }
             addView(header)
 
-            // Brightness label
+            // Separator
+            addView(View(context).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, 1
+                )
+                setBackgroundColor(VOID_RIM)
+                setPadding(0, 8, 0, 8)
+            })
+
+            // Dim level label
             val brightnessLabel = TextView(context).apply {
-                text = "Brightness: $currentPct%"
-                textSize = 13f
-                setTextColor(0xFFC4C6D0.toInt())
-                setPadding(0, 12, 0, 4)
+                text = "$currentPct%"
+                textSize = 28f
+                setTextColor(TEXT_PRIMARY)     // #F0F2F7
+                setPadding(0, 4, 0, 2)
             }
             addView(brightnessLabel)
+
+            val dimLabel = TextView(context).apply {
+                text = "DIM LEVEL"
+                textSize = 10f
+                setTextColor(TEXT_MUTED)       // #4A5068
+                setPadding(0, 0, 0, 8)
+            }
+            addView(dimLabel)
 
             // SeekBar
             val seekBar = SeekBar(context).apply {
@@ -329,7 +358,7 @@ class FloatingBubbleService : Service() {
                 setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
                     override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                         if (fromUser) {
-                            brightnessLabel.text = "Brightness: $progress%"
+                            brightnessLabel.text = "$progress%"
                             val newOpacity = progress / 100f
                             sendBrightnessToOverlay(newOpacity)
                         }
@@ -342,25 +371,26 @@ class FloatingBubbleService : Service() {
             }
             addView(seekBar)
 
-            // Quick presets row
+            // Quick presets row — Void-styled pills
             val presetsRow = LinearLayout(context).apply {
                 orientation = LinearLayout.HORIZONTAL
                 gravity = Gravity.CENTER_HORIZONTAL
-                val presets = listOf("25%" to 25, "50%" to 50, "75%" to 75, "100%" to 100, "150%" to 150, "180%" to 180)
+                val presets = listOf("25%" to 25, "50%" to 50, "100%" to 100, "180%" to 180)
                 presets.forEach { (label, pct) ->
                     addView(TextView(context).apply {
                         text = label
-                        textSize = 12f
-                        setTextColor(0xFFB8C9FF.toInt())
-                        setPadding(8, 6, 8, 6)
+                        textSize = 11f
+                        setTextColor(TEXT_SECONDARY)
+                        setPadding(10, 6, 10, 6)
                         background = GradientDrawable().apply {
                             shape = GradientDrawable.RECTANGLE
-                            setColor(0xFF354190.toInt())
+                            setColor(VOID_MID)      // #14171F — void-mid
                             cornerRadius = 8f
+                            setStroke(1, VOID_RIM)  // #1C2030
                         }
                         setOnClickListener {
                             seekBar.progress = pct
-                            brightnessLabel.text = "Brightness: $pct%"
+                            brightnessLabel.text = "$pct%"
                             sendBrightnessToOverlay(pct / 100f)
                             resetAutoHide()
                         }
@@ -402,7 +432,6 @@ class FloatingBubbleService : Service() {
         miniPanelView = null
         miniPanelParams = null
         isMiniPanelAttached = false
-        isMiniPanelVisible = false
     }
 
     // ─── Actions ─────────────────────────────────────────────────
