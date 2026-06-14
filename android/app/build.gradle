@@ -24,6 +24,13 @@ android {
         versionName "3.1.0"
     }
 
+    // Moved from AndroidManifest.xml — AGP 8.x requires this in build.gradle
+    packagingOptions {
+        jniLibs {
+            useLegacyPackaging = false
+        }
+    }
+
     // ABI splits for release builds — creates per-architecture APKs
     // Reduces download size by ~60% per-ABI vs universal APK
     splits {

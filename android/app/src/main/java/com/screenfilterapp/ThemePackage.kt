@@ -11,6 +11,7 @@ import com.facebook.react.uimanager.ViewManager
  */
 class ThemePackage : ReactPackage {
 
+    @Suppress("DEPRECATION")
     override fun createNativeModules(reactContext: ReactApplicationContext): List<NativeModule> {
         return listOf(ThemeModule(reactContext))
     }

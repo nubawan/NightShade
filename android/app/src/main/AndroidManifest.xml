@@ -37,8 +37,7 @@
       android:supportsRtl="true"
       android:resizeableActivity="true"
       android:hardwareAccelerated="true"
-      android:largeHeap="false"
-      android:extractNativeLibs="false">
+      android:largeHeap="false">
 
       <!-- Main Activity with splash screen theme -->
       <activity

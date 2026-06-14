@@ -35,11 +35,15 @@ class MainActivity : ReactActivity() {
     WindowCompat.setDecorFitsSystemWindows(window, false)
 
     // Make nav bar transparent so our content can draw behind it
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+    // window.navigationBarColor is deprecated on API 35+ but still needed
+    // for older devices. Suppress the deprecation warning.
+    @Suppress("DEPRECATION")
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM) {
       window.navigationBarColor = Color.TRANSPARENT
     }
     // API 29+ — fully transparent + light/dark icon control
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+      @Suppress("DEPRECATION")
       window.isNavigationBarContrastEnforced = false
     }
   }

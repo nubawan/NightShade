@@ -268,8 +268,7 @@ class OverlayService : Service() {
                 WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
                 WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
                 WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
-                WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
-                WindowManager.LayoutParams.FLAG_LAYOUT_INSET_DECOR
+                WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
 
         // Primary overlay (always present when enabled)
         primaryOverlay = View(this).apply {
@@ -370,8 +369,7 @@ class OverlayService : Service() {
                         WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
                         WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
                         WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
-                        WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
-                        WindowManager.LayoutParams.FLAG_LAYOUT_INSET_DECOR
+                        WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
                 addSecondaryOverlay(type, baseFlags)
             } else {
                 try {

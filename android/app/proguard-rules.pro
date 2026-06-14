@@ -42,9 +42,12 @@
 -keep class com.screenfilterapp.overlay.OverlayService { *; }
 -keep class com.screenfilterapp.overlay.FloatingBubbleService { *; }
 -keep class com.screenfilterapp.overlay.PrivacyOverlayService { *; }
+-keep class com.screenfilterapp.overlay.PrivacyFilterView { *; }
 -keep class com.screenfilterapp.notification.NotificationHelper { *; }
 -keep class com.screenfilterapp.receiver.BootReceiver { *; }
 -keep class com.screenfilterapp.tile.FilterTileService { *; }
+-keep class com.screenfilterapp.ThemeModule { *; }
+-keep class com.screenfilterapp.ThemePackage { *; }
 -keep class com.screenfilterapp.MainActivity { *; }
 -keep class com.screenfilterapp.MainApplication { *; }
 
@@ -66,7 +69,7 @@
 -dontwarn kotlin.**
 -keep class kotlin.Metadata { *; }
 -keepclassmembers class kotlin.Metadata {
-    public **[];
+    public *;
 }
 
 # ─── React Navigation ────────────────────────────────────────
