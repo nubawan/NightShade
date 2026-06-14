@@ -18,7 +18,7 @@ import com.screenfilterapp.overlay.OverlayService
  */
 object NotificationHelper {
 
-    const val CHANNEL_ID = "screen_filter_channel"
+    const val CHANNEL_ID = "nightshade_filter_channel"
     const val NOTIFICATION_ID = 1001
 
     fun createNotificationChannel(context: Context) {
