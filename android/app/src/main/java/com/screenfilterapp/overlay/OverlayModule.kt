@@ -255,6 +255,13 @@ class OverlayModule(reactContext: ReactApplicationContext) :
     @ReactMethod
     fun showBubble(promise: Promise) {
         try {
+            // Check overlay permission before starting bubble service
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                if (!Settings.canDrawOverlays(reactApplicationContext)) {
+                    promise.reject("BUBBLE_PERMISSION", "Overlay permission required for floating bubble")
+                    return
+                }
+            }
             val intent = Intent(reactApplicationContext, FloatingBubbleService::class.java).apply {
                 action = FloatingBubbleService.ACTION_SHOW
             }
@@ -271,7 +278,7 @@ class OverlayModule(reactContext: ReactApplicationContext) :
             val intent = Intent(reactApplicationContext, FloatingBubbleService::class.java).apply {
                 action = FloatingBubbleService.ACTION_HIDE
             }
-            reactApplicationContext.startService(intent)
+            startForegroundService(intent)
             promise.resolve(null)
         } catch (e: Exception) {
             promise.reject("BUBBLE_ERROR", "Failed to hide bubble: ${e.message}")

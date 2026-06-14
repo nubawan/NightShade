@@ -13,19 +13,20 @@ import android.os.Looper
 import android.view.Gravity
 import android.view.WindowManager
 import android.view.View
-import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
 import com.screenfilterapp.MainActivity
 import com.screenfilterapp.R
 
 /**
- * NightShade V4 — Foreground Overlay Service
+ * NightShade V5 — Foreground Overlay Service
  *
- * Key V4 Changes:
+ * Key V5 Changes:
  * - Extended brightness: opacity 0.0–2.0 (multi-layer overlay for >1.0)
- * - Notification with SeekBar (brightness slider)
+ * - Notification with step action buttons (-10%, Toggle, +10%) for Android 13+ compat
+ * - FLAG_IMMUTABLE on all PendingIntents (required API 31+)
  * - Robust state persistence for bubble stability
  * - Debounced overlay updates (~60fps)
+ * - Overlay covers notch and navigation bar (LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS)
  */
 class OverlayService : Service() {
 
@@ -44,6 +45,12 @@ class OverlayService : Service() {
         const val ACTION_BRIGHTNESS_DOWN = "com.screenfilterapp.BRIGHTNESS_DOWN"
         const val ACTION_SET_BRIGHTNESS = "com.screenfilterapp.SET_BRIGHTNESS"
         const val ACTION_EMERGENCY_RESET = "com.screenfilterapp.EMERGENCY_RESET"
+
+        // Notification step actions — replaces broken SeekBar RemoteViews on Android 13+
+        const val ACTION_OPACITY_DOWN = "com.screenfilterapp.OPACITY_DOWN"
+        const val ACTION_OPACITY_UP = "com.screenfilterapp.OPACITY_UP"
+        const val ACTION_NOTIF_TOGGLE = "com.screenfilterapp.NOTIF_TOGGLE"
+        const val EXTRA_OPACITY_DELTA = "opacity_delta"
 
         const val EXTRA_OPACITY = "opacity"
         const val EXTRA_COLOR = "color"
@@ -84,17 +91,22 @@ class OverlayService : Service() {
         getSharedPreferences("nightshade_prefs", MODE_PRIVATE)
     }
 
-    // Notification brightness slider receiver
-    private var brightnessReceiver: BroadcastReceiver? = null
+    // Notification action receiver
+    private var notificationReceiver: BroadcastReceiver? = null
 
     override fun onCreate() {
         super.onCreate()
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         createNotificationChannel()
-        registerBrightnessReceiver()
+        registerNotificationReceiver()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // ⚠️ CRITICAL: startForeground() must be called within 5 seconds of
+        // onStartCommand(), or Android issues an ANR and kills the process.
+        // Call it FIRST before doing anything else.
+        startForeground(NOTIFICATION_ID, buildFilterNotification())
+
         when (intent?.action) {
             ACTION_ENABLE -> {
                 val requestedOpacity = intent.getFloatExtra(EXTRA_OPACITY, currentOpacity)
@@ -122,12 +134,12 @@ class OverlayService : Service() {
             ACTION_PAUSE -> {
                 isPaused = true
                 hideOverlay()
-                updateNotification()
+                refreshNotification()
             }
             ACTION_RESUME -> {
                 isPaused = false
                 showOverlay()
-                updateNotification()
+                refreshNotification()
             }
             ACTION_UPDATE -> {
                 val requestedOpacity = intent.getFloatExtra(EXTRA_OPACITY, currentOpacity)
@@ -140,20 +152,20 @@ class OverlayService : Service() {
                 currentOpacity = (currentOpacity + 0.05f).coerceAtMost(MAX_SAFE_OPACITY)
                 if (isOverlayVisible) debouncedUpdateOverlay()
                 saveState()
-                updateNotification()
+                refreshNotification()
             }
             ACTION_BRIGHTNESS_DOWN -> {
                 currentOpacity = (currentOpacity - 0.05f).coerceAtLeast(0.0f)
                 if (isOverlayVisible) debouncedUpdateOverlay()
                 saveState()
-                updateNotification()
+                refreshNotification()
             }
             ACTION_SET_BRIGHTNESS -> {
                 val level = intent.getFloatExtra(EXTRA_OPACITY, currentOpacity)
                 currentOpacity = level.coerceIn(0f, MAX_SAFE_OPACITY)
                 if (isOverlayVisible) debouncedUpdateOverlay()
                 saveState()
-                updateNotification()
+                refreshNotification()
             }
             ACTION_EMERGENCY_RESET -> {
                 // Emergency: reduce opacity to safe level if user is locked out
@@ -161,7 +173,35 @@ class OverlayService : Service() {
                 currentEnabled = true
                 if (isOverlayVisible) updateOverlay() else showOverlay()
                 saveState()
-                updateNotification()
+                refreshNotification()
+            }
+            // Notification step action: −10%
+            ACTION_OPACITY_DOWN -> {
+                val delta = intent.getIntExtra(EXTRA_OPACITY_DELTA, -10)
+                currentOpacity = ((currentOpacity * 100 + delta) / 100f).coerceIn(0f, MAX_SAFE_OPACITY)
+                if (isOverlayVisible) debouncedUpdateOverlay()
+                saveState()
+                refreshNotification()
+            }
+            // Notification step action: +10%
+            ACTION_OPACITY_UP -> {
+                val delta = intent.getIntExtra(EXTRA_OPACITY_DELTA, 10)
+                currentOpacity = ((currentOpacity * 100 + delta) / 100f).coerceIn(0f, MAX_SAFE_OPACITY)
+                if (isOverlayVisible) debouncedUpdateOverlay()
+                saveState()
+                refreshNotification()
+            }
+            // Notification toggle action
+            ACTION_NOTIF_TOGGLE -> {
+                if (isOverlayVisible && !isPaused) {
+                    currentEnabled = false
+                    hideOverlay()
+                } else {
+                    currentEnabled = true
+                    showOverlay()
+                }
+                saveState()
+                refreshNotification()
             }
             else -> {
                 // Restore from saved state if available
@@ -175,7 +215,6 @@ class OverlayService : Service() {
             }
         }
 
-        startForeground(NOTIFICATION_ID, createNotification())
         isRunning = true
         return START_STICKY
     }
@@ -187,7 +226,7 @@ class OverlayService : Service() {
         hideOverlay()
         isRunning = false
         updateRunnable?.let { updateHandler.removeCallbacks(it) }
-        brightnessReceiver?.let {
+        notificationReceiver?.let {
             try { unregisterReceiver(it) } catch (_: Exception) {}
         }
         windowManager = null
@@ -237,17 +276,7 @@ class OverlayService : Service() {
             setBackgroundColor(currentColor)
             alpha = currentOpacity.coerceAtMost(1.0f)
         }
-        primaryParams = WindowManager.LayoutParams(
-            WindowManager.LayoutParams.MATCH_PARENT,
-            WindowManager.LayoutParams.MATCH_PARENT,
-            type, baseFlags, PixelFormat.TRANSLUCENT
-        ).apply {
-            gravity = Gravity.TOP or Gravity.START
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                layoutInDisplayCutoutMode =
-                    WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
-            }
-        }
+        primaryParams = buildOverlayParams(type, baseFlags)
 
         try {
             windowManager?.addView(primaryOverlay, primaryParams)
@@ -263,7 +292,30 @@ class OverlayService : Service() {
             addSecondaryOverlay(type, baseFlags)
         }
 
-        updateNotification()
+        refreshNotification()
+    }
+
+    /**
+     * Build overlay layout params with cutout and edge-to-edge support.
+     * Uses LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS on API 29+ so the filter
+     * extends into the notch/punch-hole region with no unfiltered strip.
+     */
+    private fun buildOverlayParams(type: Int, baseFlags: Int): WindowManager.LayoutParams {
+        return WindowManager.LayoutParams(
+            WindowManager.LayoutParams.MATCH_PARENT,
+            WindowManager.LayoutParams.MATCH_PARENT,
+            type, baseFlags, PixelFormat.TRANSLUCENT
+        ).apply {
+            gravity = Gravity.TOP or Gravity.START
+            // Extend into notch and navigation bar regions
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                layoutInDisplayCutoutMode =
+                    WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                layoutInDisplayCutoutMode =
+                    WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+            }
+        }
     }
 
     private fun addSecondaryOverlay(type: Int, baseFlags: Int) {
@@ -272,17 +324,7 @@ class OverlayService : Service() {
             setBackgroundColor(currentColor)
             alpha = (currentOpacity - 1.0f).coerceIn(0f, 1f)
         }
-        secondaryParams = WindowManager.LayoutParams(
-            WindowManager.LayoutParams.MATCH_PARENT,
-            WindowManager.LayoutParams.MATCH_PARENT,
-            type, baseFlags, PixelFormat.TRANSLUCENT
-        ).apply {
-            gravity = Gravity.TOP or Gravity.START
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                layoutInDisplayCutoutMode =
-                    WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
-            }
-        }
+        secondaryParams = buildOverlayParams(type, baseFlags)
         try {
             windowManager?.addView(secondaryOverlay, secondaryParams)
         } catch (e: Exception) {
@@ -302,7 +344,7 @@ class OverlayService : Service() {
         primaryParams = null
         removeSecondaryOverlay()
         isOverlayVisible = false
-        updateNotification()
+        refreshNotification()
     }
 
     private fun updateOverlay() {
@@ -376,10 +418,15 @@ class OverlayService : Service() {
         }
     }
 
-    // ─── Notification with Brightness Slider ─────────────────────
+    // ─── Notification with Step Actions (Android 13+ compat) ────
 
-    private fun registerBrightnessReceiver() {
-        brightnessReceiver = object : BroadcastReceiver() {
+    /**
+     * Register receiver for notification step actions (−10%, Toggle, +10%).
+     * Replaces the broken SeekBar-in-RemoteViews pattern that doesn't
+     * receive touch events on Android 13+.
+     */
+    private fun registerNotificationReceiver() {
+        notificationReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
                 when (intent?.action) {
                     "com.screenfilterapp.NOTIF_BRIGHTNESS" -> {
@@ -387,7 +434,7 @@ class OverlayService : Service() {
                         currentOpacity = level.coerceIn(0f, MAX_SAFE_OPACITY)
                         if (isOverlayVisible) debouncedUpdateOverlay()
                         saveState()
-                        updateNotification()
+                        refreshNotification()
                     }
                     "com.screenfilterapp.NOTIF_TOGGLE" -> {
                         if (isOverlayVisible && !isPaused) {
@@ -398,7 +445,7 @@ class OverlayService : Service() {
                             showOverlay()
                         }
                         saveState()
-                        updateNotification()
+                        refreshNotification()
                     }
                 }
             }
@@ -408,9 +455,9 @@ class OverlayService : Service() {
             addAction("com.screenfilterapp.NOTIF_TOGGLE")
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(brightnessReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+            registerReceiver(notificationReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
         } else {
-            registerReceiver(brightnessReceiver, filter)
+            registerReceiver(notificationReceiver, filter)
         }
     }
 
@@ -427,7 +474,31 @@ class OverlayService : Service() {
         }
     }
 
-    private fun createNotification(): Notification {
+    /**
+     * PendingIntent factory — always uses FLAG_IMMUTABLE on API 31+.
+     * Required to prevent crashes on Android 12+.
+     */
+    private fun makeActionPendingIntent(action: String, delta: Int = 0): PendingIntent {
+        val intent = Intent(this, OverlayService::class.java).apply {
+            this.action = action
+            if (delta != 0) putExtra(EXTRA_OPACITY_DELTA, delta)
+        }
+        val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        else
+            PendingIntent.FLAG_UPDATE_CURRENT
+
+        return PendingIntent.getService(this, action.hashCode(), intent, flags)
+    }
+
+    /**
+     * Build the filter notification with three step action buttons:
+     * −10%, Toggle, +10%. This replaces the broken SeekBar-in-RemoteViews
+     * pattern that doesn't receive touch events on Android 13+.
+     */
+    private fun buildFilterNotification(): Notification {
+        val currentPct = Math.round(currentOpacity * 100)
+
         val openAppIntent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
@@ -439,64 +510,42 @@ class OverlayService : Service() {
         val statusText = when {
             !isOverlayVisible -> "Inactive"
             isPaused -> "Paused"
-            else -> "Active · ${Math.round(currentOpacity * 100)}% dim"
+            else -> "Active \u00B7 $currentPct% dim"
         }
-
-        // Expanded notification with custom layout including SeekBar
-        val expandedView = RemoteViews(packageName, R.layout.notification_expanded).apply {
-            setTextViewText(R.id.notification_status, statusText)
-            setTextViewText(R.id.notification_brightness, "${Math.round(currentOpacity * 100)}%")
-
-            // Set SeekBar progress (0-200 maps to 0%-200%)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                // SeekBar in RemoteViews is available from API 31+
-                // For older versions, we rely on the +/- buttons
-            }
-        }
-
-        // Toggle action
-        val toggleIntent = Intent("com.screenfilterapp.NOTIF_TOGGLE")
-        val togglePending = PendingIntent.getBroadcast(
-            this, 10, toggleIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        // Brightness preset actions (since SeekBar in RemoteViews requires API 31+)
-        val dim25 = createBrightnessPendingIntent(0.25f, 11)
-        val dim50 = createBrightnessPendingIntent(0.50f, 12)
-        val dim75 = createBrightnessPendingIntent(0.75f, 13)
-        val dim100 = createBrightnessPendingIntent(1.00f, 14)
-        val dim150 = createBrightnessPendingIntent(1.50f, 15)
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("NightShade")
             .setContentText(statusText)
             .setSmallIcon(R.drawable.ic_stat_nightshade)
             .setContentIntent(openAppPending)
-            .setCustomContentView(expandedView)
-            .setStyle(NotificationCompat.DecoratedCustomViewStyle())
-            .addAction(R.drawable.ic_stat_nightshade, if (isOverlayVisible) "Pause" else "Resume", togglePending)
-            .addAction(R.drawable.ic_stat_nightshade, "25%", dim25)
-            .addAction(R.drawable.ic_stat_nightshade, "50%", dim50)
-            .addAction(R.drawable.ic_stat_nightshade, "100%", dim100)
             .setOngoing(true)
             .setSilent(true)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            // Three action buttons replace the broken SeekBar RemoteViews
+            .addAction(
+                NotificationCompat.Action(
+                    R.drawable.ic_stat_nightshade, "\u221210%",
+                    makeActionPendingIntent(ACTION_OPACITY_DOWN, -10)
+                )
+            )
+            .addAction(
+                NotificationCompat.Action(
+                    R.drawable.ic_stat_nightshade,
+                    if (isOverlayVisible && !isPaused) "Pause" else "Resume",
+                    makeActionPendingIntent(ACTION_NOTIF_TOGGLE)
+                )
+            )
+            .addAction(
+                NotificationCompat.Action(
+                    R.drawable.ic_stat_nightshade, "+10%",
+                    makeActionPendingIntent(ACTION_OPACITY_UP, 10)
+                )
+            )
             .build()
     }
 
-    private fun createBrightnessPendingIntent(level: Float, requestCode: Int): PendingIntent {
-        val intent = Intent("com.screenfilterapp.NOTIF_BRIGHTNESS").apply {
-            putExtra(EXTRA_OPACITY, level)
-            setPackage(packageName)
-        }
-        return PendingIntent.getBroadcast(
-            this, requestCode, intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-    }
-
-    private fun updateNotification() {
+    private fun refreshNotification() {
         getSystemService(NotificationManager::class.java)
-            .notify(NOTIFICATION_ID, createNotification())
+            .notify(NOTIFICATION_ID, buildFilterNotification())
     }
 }

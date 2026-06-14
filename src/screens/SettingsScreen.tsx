@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert, PermissionsAndroid, Platform, Linking } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Slider from '@react-native-community/slider';
@@ -17,6 +17,7 @@ import { storageService } from '../services/StorageService';
 import { overlayService } from '../services/OverlayService';
 import { PrivacyFilterService } from '../services/PrivacyFilterService';
 import { openBattery } from '../utils/helpers';
+import { ensureNotificationPermission } from '../permissions/NotificationPermission';
 
 const DENSITY_OPTIONS: { value: PrivacyDensity; label: string }[] = [
   { value: 'subtle', label: 'Subtle' },
@@ -108,6 +109,25 @@ const SettingsScreen: React.FC = () => {
   }, []);
 
   const handleBubble = useCallback(async (v: boolean) => {
+    if (v) {
+      // Request notification permission on Android 13+ before starting bubble service
+      const notifOk = await ensureNotificationPermission();
+      if (!notifOk) return;
+
+      // Check overlay permission
+      const hasPermission = await overlayService.hasPermission();
+      if (!hasPermission) {
+        Alert.alert(
+          'Permission required',
+          'Allow "Display over other apps" to use the floating bubble.',
+          [
+            { text: 'Open Settings', onPress: () => overlayService.requestPermission() },
+            { text: 'Cancel', style: 'cancel' },
+          ],
+        );
+        return;
+      }
+    }
     setFloatingBubble(v);
     await storageService.setFloatingWidget(v);
     await storageService.setBubbleEnabled(v);
@@ -289,7 +309,7 @@ const SettingsScreen: React.FC = () => {
         </View>
       </View>
       <Text style={ss.disclaimer}>
-        Software approximation only. Effect varies with ambient lighting and distance.
+        Software privacy mode reduces screen contrast when viewed from the side by using an optical stripe pattern. It is not a substitute for a physical privacy screen protector. Content can still be read from directly above/below or at close range.
       </Text>
 
       <SectionSeparator />

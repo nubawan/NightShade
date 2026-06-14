@@ -1,11 +1,17 @@
 /**
- * NightShade V4 — Theme Context
- * Fixed theme toggle with immediate effect and persistence.
- * Properly syncs with system color scheme changes.
+ * NightShade V5 — Theme Context
+ *
+ * Fixed theme toggle with:
+ * - Native ThemeModule integration (AppCompatDelegate.setDefaultNightMode)
+ * - Immediate effect and persistence
+ * - Proper sync with system color scheme changes
+ *
+ * The native module persists the selected mode to SharedPreferences,
+ * and MainActivity restores it BEFORE super.onCreate() on cold start.
  */
 
 import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react';
-import { useColorScheme } from 'react-native';
+import { useColorScheme, NativeModules, Platform } from 'react-native';
 import { AppTheme } from '../types';
 import { Palette, getPalette, palettes } from '../theme';
 import { storageService } from '../services/StorageService';
@@ -36,6 +42,16 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     (async () => {
       const saved = await storageService.getAppTheme();
       setThemeState(saved);
+
+      // Sync native theme module with persisted value
+      if (Platform.OS === 'android' && NativeModules.ThemeModule) {
+        try {
+          await NativeModules.ThemeModule.setTheme(saved);
+        } catch {
+          // ThemeModule may fail gracefully
+        }
+      }
+
       setLoaded(true);
     })();
   }, []);
@@ -43,6 +59,15 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const setTheme = useCallback(async (t: AppTheme) => {
     setThemeState(t);
     await storageService.setAppTheme(t);
+
+    // Sync with native ThemeModule so Android recreates with the correct theme
+    if (Platform.OS === 'android' && NativeModules.ThemeModule) {
+      try {
+        await NativeModules.ThemeModule.setTheme(t);
+      } catch {
+        // ThemeModule may fail gracefully
+      }
+    }
   }, []);
 
   const isDark = theme === 'system' ? systemDark : theme === 'dark';

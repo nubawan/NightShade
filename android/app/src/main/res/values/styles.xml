@@ -1,14 +1,19 @@
 <resources>
 
-    <!-- Base application theme — Void Architecture -->
-    <style name="AppTheme" parent="Theme.AppCompat.NoActionBar">
+    <!-- Base application theme — Void Architecture with DayNight support -->
+    <!-- DayNight variant is required for theme switching to work on Android 10+ -->
+    <style name="AppTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
         <item name="android:editTextBackground">@drawable/rn_edit_text_material</item>
         <item name="android:windowIsTranslucent">false</item>
         <item name="android:windowBackground">@color/void_black</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <!-- Edge-to-edge cutout handling -->
         <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+        <!-- Transparent bars for edge-to-edge — actual background comes from RN views -->
+        <item name="android:windowTranslucentNavigation">false</item>
+        <item name="android:windowTranslucentStatus">false</item>
     </style>
 
     <!-- Splash Screen Theme (Android 12+ Splash Screen API) -->

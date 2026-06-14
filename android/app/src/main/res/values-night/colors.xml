@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Night mode colors — Void Architecture dark palette -->
+<resources>
+    <color name="void_black">#08090B</color>
+    <color name="void_deep">#0D0F14</color>
+    <color name="void_mid">#14171F</color>
+    <color name="void_rim">#1C2030</color>
+    <color name="void_ghost">#2A2E3E</color>
+    <color name="splash_bg">#08090B</color>
+    <color name="accent_amber">#E8A040</color>
+    <color name="accent_amber_dim">#A86820</color>
+    <color name="accent_ice">#5BB8D4</color>
+    <color name="text_primary">#F0F2F7</color>
+    <color name="status_on">#3DDC84</color>
+    <color name="danger">#E85540</color>
+</resources>

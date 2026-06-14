@@ -25,6 +25,7 @@ import { FilterPreset } from '../types';
 import { overlayStore } from '../services/OverlayStateStore';
 import { storageService } from '../services/StorageService';
 import { pctStr, debounce, blendFilterOverBlack } from '../utils/helpers';
+import { ensureNotificationPermission } from '../permissions/NotificationPermission';
 
 interface Props {
   onCreateFilter: () => void;
@@ -78,11 +79,18 @@ const HomeScreen: React.FC<Props> = ({ onCreateFilter, onColorPicker }) => {
         useNativeDriver: true,
       }),
     ]).start();
+
+    // Request notification permission on Android 13+ before starting the service
+    if (!settings.enabled) {
+      const notifOk = await ensureNotificationPermission();
+      if (!notifOk) return;
+    }
+
     const ok = await overlayStore.toggle();
     if (!ok) {
       Alert.alert(
         'Overlay Permission Required',
-        'NightShade needs "Display over other apps" permission to work. Open Settings → Apps → NightShade → Permissions.',
+        'NightShade needs "Display over other apps" permission to work. Open Settings \u2192 Apps \u2192 NightShade \u2192 Permissions.',
         [
           { text: 'Cancel', style: 'cancel' },
           { text: 'Open Settings', onPress: () => Linking.openSettings() },
@@ -90,7 +98,7 @@ const HomeScreen: React.FC<Props> = ({ onCreateFilter, onColorPicker }) => {
       );
     }
     save();
-  }, [heroScale, save]);
+  }, [heroScale, save, settings.enabled]);
 
   const onOpacity = useCallback((o: number) => {
     // Optimistic local update for smooth slider

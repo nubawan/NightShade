@@ -10,6 +10,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated, LayoutAnimation, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Slider from '@react-native-community/slider';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { S, T, R, ANIM, colors } from '../theme';
@@ -261,10 +262,11 @@ interface BottomNavProps {
 
 export const BottomNav: React.FC<BottomNavProps> = ({ active, onTab, onFabPress }) => {
   const { palette, isDark } = useAppTheme();
+  const insets = useSafeAreaInsets();
 
   return (
     <View style={[bn.outer, { backgroundColor: palette.background }]}>
-      <View style={[bn.bar, { backgroundColor: isDark ? palette.surfaceContainer : palette.surface, borderTopColor: palette.outlineVariant }]}>
+      <View style={[bn.bar, { backgroundColor: isDark ? palette.surfaceContainer : palette.surface, borderTopColor: palette.outlineVariant, paddingBottom: Math.max(insets.bottom, 4) }]}>
         {TAB_CONFIG.map(t => {
           const isActive = active === t.key;
           return (
@@ -310,7 +312,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ active, onTab, onFabPress 
 
 const bn = StyleSheet.create({
   outer: { position: 'relative' },
-  bar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', borderTopWidth: 1, paddingBottom: Platform.select({ android: 4, ios: 20 }), paddingTop: S.s2, minHeight: 60 },
+  bar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', borderTopWidth: 1, paddingTop: S.s2, minHeight: 60 },
   item: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: S.s1, minHeight: S.s12, borderRadius: R.lg },
   itemActive: { /* dynamic bg applied via style */ },
   iconWrap: { paddingHorizontal: S.s4, paddingVertical: S.s1, borderRadius: R.xl, minHeight: S.s8, justifyContent: 'center', alignItems: 'center' },

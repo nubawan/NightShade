@@ -1,7 +1,12 @@
 package com.screenfilterapp.overlay
 
 import android.annotation.SuppressLint
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.app.Service
+import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.PixelFormat
@@ -10,27 +15,40 @@ import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.provider.Settings
+import android.util.Log
 import android.view.*
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.TextView
+import androidx.core.app.NotificationCompat
 import com.screenfilterapp.MainActivity
 import com.screenfilterapp.R
 
 /**
  * NightShade V5 — Floating Bubble Service
- * Revamped with Void Architecture design tokens.
  *
- * G1: Bubble icon uses ic_bubble_nightshade (Iris Filter mark)
- * G2: Panel background #0D0F14 (void-deep), text #F0F2F7, no glassmorphism
+ * CRITICAL FIX: Proper foreground service to prevent ANR → crash loop.
+ *
+ * Key changes from V4:
+ * - startForeground() is called FIRST in onStartCommand() before any other work
+ * - View creation is deferred via Handler.postDelayed() to avoid blocking the main thread
+ * - onTaskRemoved() does NOT auto-restart — prevents crash loop after ANR
+ * - FLAG_IMMUTABLE on all PendingIntents (required API 31+)
+ * - Separate notification channel from OverlayService
+ *
+ * Revamped with Void Architecture design tokens.
  */
 class FloatingBubbleService : Service() {
 
     companion object {
         const val ACTION_SHOW = "com.screenfilterapp.BUBBLE_SHOW"
         const val ACTION_HIDE = "com.screenfilterapp.BUBBLE_HIDE"
-        const val ACTION_RESTORE = "com.screenfilterapp.BUBBLE_RESTORE"
+        const val ACTION_STOP = "com.screenfilterapp.BUBBLE_STOP"
+        const val CHANNEL_ID = "bubble_service_channel"
+        const val NOTIF_ID = 2001
+
         var isRunning = false
             private set
 
@@ -66,6 +84,7 @@ class FloatingBubbleService : Service() {
     private var initialTouchY = 0f
     private var touchStartTime = 0L
 
+    private val mainHandler = Handler(Looper.getMainLooper())
     private val autoHideHandler = Handler(Looper.getMainLooper())
     private val AUTO_HIDE_DELAY = 5000L
 
@@ -79,19 +98,25 @@ class FloatingBubbleService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // ⚠️ CRITICAL: startForeground() must be called within 5 seconds of
+        // onStartCommand(), or Android issues an ANR and kills the process.
+        // Call it FIRST before doing anything else.
+        startForeground(NOTIF_ID, buildServiceNotification())
+
         when (intent?.action) {
             ACTION_SHOW -> {
                 prefs.edit().putBoolean("bubble_enabled", true).apply()
-                showBubble()
+                // Defer view creation to avoid blocking onStartCommand
+                mainHandler.postDelayed({ createBubble() }, 100)
             }
             ACTION_HIDE -> {
                 prefs.edit().putBoolean("bubble_enabled", false).apply()
-                hideBubble()
+                destroyBubble()
+                stopSelf()
             }
-            ACTION_RESTORE -> {
-                if (prefs.getBoolean("bubble_enabled", false) && !isBubbleAttached) {
-                    showBubble()
-                }
+            ACTION_STOP -> {
+                destroyBubble()
+                stopSelf()
             }
         }
         return START_STICKY
@@ -101,26 +126,18 @@ class FloatingBubbleService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
-        safeRemoveBubble()
-        safeRemoveMiniPanel()
+        destroyBubble()
         isRunning = false
     }
 
+    /**
+     * ⚠️ Do NOT auto-restart on task removal — this causes the crash loop.
+     * The ANR cascade: restart → addView blocks main thread → ANR → kill → restart → repeat.
+     * Let the user explicitly re-enable from the app instead.
+     */
     override fun onTaskRemoved(rootIntent: Intent?) {
-        if (prefs.getBoolean("bubble_enabled", false)) {
-            val restartIntent = Intent(this, FloatingBubbleService::class.java).apply {
-                action = ACTION_RESTORE
-            }
-            try {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    startForegroundService(restartIntent)
-                } else {
-                    startService(restartIntent)
-                }
-            } catch (_: Exception) {
-                // Service restart may fail in some OEM restrictions
-            }
-        }
+        destroyBubble()
+        stopSelf()
         super.onTaskRemoved(rootIntent)
     }
 
@@ -131,6 +148,7 @@ class FloatingBubbleService : Service() {
             windowManager?.addView(view, params)
             true
         } catch (e: Exception) {
+            Log.e("FloatingBubble", "addView failed: ${e.message}", e)
             false
         }
     }
@@ -139,7 +157,9 @@ class FloatingBubbleService : Service() {
         if (view == null) return
         try {
             windowManager?.removeView(view)
-        } catch (_: Exception) {}
+        } catch (e: Exception) {
+            Log.e("FloatingBubble", "removeView: ${e.message}")
+        }
     }
 
     private fun safeUpdateLayout(view: View?, params: WindowManager.LayoutParams?) {
@@ -149,15 +169,21 @@ class FloatingBubbleService : Service() {
         } catch (_: Exception) {}
     }
 
-    // ─── Bubble (G1: Iris Filter icon) ─────────────────────────
+    // ─── Bubble Creation (deferred) ─────────────────────────────
 
     @SuppressLint("ClickableViewAccessibility")
-    private fun showBubble() {
+    private fun createBubble() {
         if (isBubbleAttached && bubbleView != null) return
+
+        if (!Settings.canDrawOverlays(this)) {
+            broadcastPermissionMissing()
+            stopSelf()
+            return
+        }
 
         isRunning = true
 
-        // G1: Use the new Iris Filter bubble icon
+        // G1: Use the Iris Filter bubble icon
         bubbleView = ImageView(this).apply {
             setImageResource(R.drawable.ic_bubble_nightshade)
             setPadding(4, 4, 4, 4)
@@ -190,6 +216,7 @@ class FloatingBubbleService : Service() {
             isRunning = false
             bubbleView = null
             bubbleParams = null
+            stopSelf()
             return
         }
 
@@ -242,10 +269,12 @@ class FloatingBubbleService : Service() {
         }
     }
 
-    private fun hideBubble() {
-        safeRemoveMiniPanel()
-        safeRemoveBubble()
-        isRunning = false
+    private fun destroyBubble() {
+        mainHandler.post {
+            safeRemoveMiniPanel()
+            safeRemoveBubble()
+            isRunning = false
+        }
     }
 
     private fun safeRemoveBubble() {
@@ -473,5 +502,39 @@ class FloatingBubbleService : Service() {
     private fun resetAutoHide() {
         autoHideHandler.removeCallbacksAndMessages(null)
         autoHideHandler.postDelayed({ safeRemoveMiniPanel() }, AUTO_HIDE_DELAY)
+    }
+
+    // ─── Foreground Service Notification ─────────────────────────
+
+    private fun buildServiceNotification(): Notification {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val chan = NotificationChannel(
+                CHANNEL_ID, "Floating Bubble",
+                NotificationManager.IMPORTANCE_LOW
+            ).apply { setShowBadge(false) }
+            getSystemService(NotificationManager::class.java).createNotificationChannel(chan)
+        }
+
+        val stopPi = PendingIntent.getService(
+            this, 0,
+            Intent(this, FloatingBubbleService::class.java).apply { action = ACTION_STOP },
+            PendingIntent.FLAG_UPDATE_CURRENT or
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) PendingIntent.FLAG_IMMUTABLE
+                else 0
+        )
+
+        return NotificationCompat.Builder(this, CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_bubble_nightshade)
+            .setContentTitle("Floating Controls Active")
+            .setContentText("Tap to dismiss")
+            .setContentIntent(stopPi)
+            .setOngoing(true)
+            .setSilent(true)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .build()
+    }
+
+    private fun broadcastPermissionMissing() {
+        sendBroadcast(Intent("com.screenfilterapp.ACTION_OVERLAY_PERMISSION_MISSING"))
     }
 }

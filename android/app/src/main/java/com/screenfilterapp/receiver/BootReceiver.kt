@@ -57,7 +57,7 @@ class BootReceiver : BroadcastReceiver() {
             if (bubblePrefs.getBoolean("bubble_enabled", false)) {
                 Log.d(TAG, "Restoring floating bubble")
                 val bubbleIntent = Intent(context, FloatingBubbleService::class.java).apply {
-                    action = FloatingBubbleService.ACTION_RESTORE
+                    action = FloatingBubbleService.ACTION_SHOW
                 }
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     context.startForegroundService(bubbleIntent)
