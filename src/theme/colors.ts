@@ -4,7 +4,7 @@
  * This file re-exports the Void Architecture tokens for backward compat.
  */
 
-import { colors } from './index';
+import { colors } from './tokens';
 
 // Redirect all old Colors references to the new Void token system
 export const Colors = {

@@ -73,3 +73,11 @@ yarn-error.log
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+
+# Production secrets — NEVER commit these
+google-services.json
+keystore.properties
+release.keystore
+*.jks
+.env
+.env.production

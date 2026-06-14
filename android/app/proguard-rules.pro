@@ -1,10 +1,14 @@
 # ============================================================
 # NightShade ProGuard Rules
 # Optimized for React Native + custom native modules
+# Based on: React Native Production Readiness Guide
 # ============================================================
 
 # ─── React Native Core ───────────────────────────────────────
-# Keep React Native bridge classes
+# Most of this is included automatically via the RN Gradle
+# plugin's default rules on current versions; kept here to
+# document intent and cover older RN versions.
+-keep,allowobfuscation,allowoptimization class com.facebook.react.** { *; }
 -keep,allowobfuscation @interface com.facebook.proguard.annotations.DoNotStrip
 -keep,allowobfuscation @interface com.facebook.proguard.annotations.KeepGettersAndSetters
 -keep @com.facebook.proguard.annotations.DoNotStrip class *
@@ -13,7 +17,9 @@
     @com.facebook.proguard.annotations.DoNotStrip *;
     @com.facebook.common.internal.DoNotStrip *;
 }
--keep @interface com.facebook.proguard.annotations.DoNotStrip
+-keepclassmembers class * {
+    native <methods>;
+}
 
 # Keep React Native modules, view managers, and packages
 -keep class * extends com.facebook.react.bridge.ReactModule { *; }
@@ -43,7 +49,6 @@
 -keep class com.screenfilterapp.overlay.FloatingBubbleService { *; }
 -keep class com.screenfilterapp.overlay.PrivacyOverlayService { *; }
 -keep class com.screenfilterapp.overlay.PrivacyFilterView { *; }
--keep class com.screenfilterapp.notification.NotificationHelper { *; }
 -keep class com.screenfilterapp.receiver.BootReceiver { *; }
 -keep class com.screenfilterapp.tile.FilterTileService { *; }
 -keep class com.screenfilterapp.ThemeModule { *; }
@@ -57,8 +62,36 @@
 }
 
 # ─── Hermes Engine ───────────────────────────────────────────
+-keep class com.facebook.hermes.unicode.** { *; }
 -keep class com.facebook.jni.** { *; }
--keep class com.facebook.hermes.** { *; }
+
+# ─── OkHttp / Retrofit ──────────────────────────────────────
+# Used transitively by Firebase and other Google libraries
+-dontwarn okhttp3.**
+-dontwarn okio.**
+-dontwarn retrofit2.**
+-keepattributes Signature
+-keepattributes Exceptions
+-keep class retrofit2.** { *; }
+-keepclasseswithmembers class * {
+    @retrofit2.http.* <methods>;
+}
+
+# ─── Gson ────────────────────────────────────────────────────
+-keepattributes Signature
+-keepattributes *Annotation*
+-keep class com.google.gson.** { *; }
+-keep class * implements com.google.gson.TypeAdapterFactory
+-keep class * implements com.google.gson.JsonSerializer
+-keep class * implements com.google.gson.JsonDeserializer
+
+# ─── Firebase / Crashlytics ──────────────────────────────────
+-keepattributes SourceFile,LineNumberTable
+-keep public class * extends java.lang.Exception
+# The Crashlytics Gradle plugin uploads the mapping file
+# automatically during release builds. Do NOT add
+# -dontobfuscate (it defeats the point of R8), and do not
+# skip the mapping upload step.
 
 # ─── AndroidX / Support Library ──────────────────────────────
 -keep class androidx.** { *; }
@@ -98,13 +131,9 @@
 }
 
 # ─── Aggressive Optimization ─────────────────────────────────
-# Optimization passes
 -optimizationpasses 5
 -dontusemixedcaseclassnames
 -dontskipnonpubliclibraryclasses
--verbose
-
-# Optimization settings
 -optimizations !code/simplification/arithmetic,!code/simplification/cast,!field/*,!class/merging/*
 
 # ─── Warnings Suppression ────────────────────────────────────

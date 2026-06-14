@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NightShade — Privacy Policy</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 720px; margin: 0 auto; padding: 24px 16px; color: #1a1a1a; line-height: 1.7; }
+        h1 { font-size: 28px; border-bottom: 2px solid #E8A040; padding-bottom: 8px; }
+        h2 { font-size: 20px; margin-top: 32px; color: #333; }
+        .last-updated { color: #666; font-size: 14px; }
+        ul { padding-left: 20px; }
+        li { margin-bottom: 6px; }
+    </style>
+</head>
+<body>
+    <h1>NightShade Privacy Policy</h1>
+    <p class="last-updated">Last updated: June 15, 2026</p>
+
+    <h2>Overview</h2>
+    <p>NightShade is a screen filter application that reduces blue light and adjusts screen brightness. We are committed to protecting your privacy. This policy explains what data we collect, how we use it, and your rights.</p>
+
+    <h2>Data We Collect</h2>
+    <p><strong>NightShade does not collect, transmit, or store any personal user data on external servers.</strong> The app operates entirely on your device. Specifically:</p>
+    <ul>
+        <li><strong>Filter settings</strong> (opacity, color, presets) are stored locally on your device using Android SharedPreferences. They are never transmitted externally.</li>
+        <li><strong>Theme preference</strong> (light/dark/system) is stored locally and never shared.</li>
+        <li><strong>No personal information</strong>: We do not collect names, email addresses, phone numbers, or any identifying information.</li>
+        <li><strong>No usage analytics</strong>: We do not track how you use the app.</li>
+        <li><strong>No location data</strong>: The app has no access to and does not request location permissions.</li>
+    </ul>
+
+    <h2>Crash Reporting</h2>
+    <p>We use Firebase Crashlytics to automatically collect crash reports when the app unexpectedly closes. This data helps us fix bugs and improve stability. Crash reports contain:</p>
+    <ul>
+        <li>Device model and Android version</li>
+        <li>Stack traces (technical error details)</li>
+        <li>Timestamp of the crash</li>
+    </ul>
+    <p>Crash reports do <strong>not</strong> contain personal information. No user identifiers, email addresses, or app settings are included in crash data.</p>
+
+    <h2>Permissions</h2>
+    <p>NightShade requests the following Android permissions, each required for core functionality:</p>
+    <ul>
+        <li><strong>SYSTEM_ALERT_WINDOW</strong>: Required to display the screen filter overlay on top of other apps.</li>
+        <li><strong>FOREGROUND_SERVICE</strong>: Required to keep the filter running when the app is in the background.</li>
+        <li><strong>FOREGROUND_SERVICE_SPECIAL_USE</strong>: Declares the specific use case for our foreground service (screen filter).</li>
+        <li><strong>POST_NOTIFICATIONS</strong>: Required on Android 13+ to show the filter control notification.</li>
+        <li><strong>RECEIVE_BOOT_COMPLETED</strong>: Required to restore the filter after device restart (only if auto-start is enabled).</li>
+        <li><strong>INTERNET</strong>: Required by React Native framework for development; not used to transmit user data.</li>
+    </ul>
+
+    <h2>Third-Party Services</h2>
+    <ul>
+        <li><strong>Firebase Crashlytics</strong> (Google): Collects crash reports. See <a href="https://firebase.google.com/support/privacy">Google's privacy policy</a>.</li>
+    </ul>
+
+    <h2>Data Sharing</h2>
+    <p>We do not sell, trade, or share any user data with third parties. Crash reports are sent directly to our Firebase Crashlytics dashboard and are not shared further.</p>
+
+    <h2>Data Retention</h2>
+    <p>All app settings are stored locally on your device. Uninstalling the app removes all local data. Crash reports are retained in Firebase Crashlytics for 90 days per Google's retention policy.</p>
+
+    <h2>Children's Privacy</h2>
+    <p>NightShade does not knowingly collect data from children under 13. The app is a utility tool and does not target or collect data from any specific age group.</p>
+
+    <h2>Your Rights</h2>
+    <p>You can control all app permissions through Android Settings at any time. Uninstalling the app removes all locally stored data.</p>
+
+    <h2>Changes to This Policy</h2>
+    <p>We may update this privacy policy from time to time. Changes will be reflected in the "Last updated" date above. Continued use of the app constitutes acceptance of any changes.</p>
+
+    <h2>Contact</h2>
+    <p>If you have questions about this privacy policy, please contact us at: <a href="mailto:privacy@nightshade.app">privacy@nightshade.app</a></p>
+</body>
+</html>
