@@ -43,21 +43,21 @@
 
 # ─── NightShade Native Modules ───────────────────────────────
 # Keep all overlay module classes — they're accessed via React bridge
--keep class com.screenfilterapp.overlay.OverlayModule { *; }
--keep class com.screenfilterapp.overlay.OverlayPackage { *; }
--keep class com.screenfilterapp.overlay.OverlayService { *; }
--keep class com.screenfilterapp.overlay.FloatingBubbleService { *; }
--keep class com.screenfilterapp.overlay.PrivacyOverlayService { *; }
--keep class com.screenfilterapp.overlay.PrivacyFilterView { *; }
--keep class com.screenfilterapp.receiver.BootReceiver { *; }
--keep class com.screenfilterapp.tile.FilterTileService { *; }
--keep class com.screenfilterapp.ThemeModule { *; }
--keep class com.screenfilterapp.ThemePackage { *; }
--keep class com.screenfilterapp.MainActivity { *; }
--keep class com.screenfilterapp.MainApplication { *; }
+-keep class app.nightshade.screenfilter.overlay.OverlayModule { *; }
+-keep class app.nightshade.screenfilter.overlay.OverlayPackage { *; }
+-keep class app.nightshade.screenfilter.overlay.OverlayService { *; }
+-keep class app.nightshade.screenfilter.overlay.FloatingBubbleService { *; }
+-keep class app.nightshade.screenfilter.overlay.PrivacyOverlayService { *; }
+-keep class app.nightshade.screenfilter.overlay.PrivacyFilterView { *; }
+-keep class app.nightshade.screenfilter.receiver.BootReceiver { *; }
+-keep class app.nightshade.screenfilter.tile.FilterTileService { *; }
+-keep class app.nightshade.screenfilter.ThemeModule { *; }
+-keep class app.nightshade.screenfilter.ThemePackage { *; }
+-keep class app.nightshade.screenfilter.MainActivity { *; }
+-keep class app.nightshade.screenfilter.MainApplication { *; }
 
 # Keep @ReactMethod annotated methods
--keepclassmembers class com.screenfilterapp.** {
+-keepclassmembers class app.nightshade.screenfilter.** {
     @com.facebook.react.bridge.ReactMethod *;
 }
 
@@ -66,16 +66,9 @@
 -keep class com.facebook.jni.** { *; }
 
 # ─── OkHttp / Retrofit ──────────────────────────────────────
-# Used transitively by Firebase and other Google libraries
+# Retained for React Native internal networking
 -dontwarn okhttp3.**
 -dontwarn okio.**
--dontwarn retrofit2.**
--keepattributes Signature
--keepattributes Exceptions
--keep class retrofit2.** { *; }
--keepclasseswithmembers class * {
-    @retrofit2.http.* <methods>;
-}
 
 # ─── Gson ────────────────────────────────────────────────────
 -keepattributes Signature
@@ -86,12 +79,9 @@
 -keep class * implements com.google.gson.JsonDeserializer
 
 # ─── Firebase / Crashlytics ──────────────────────────────────
--keepattributes SourceFile,LineNumberTable
--keep public class * extends java.lang.Exception
-# The Crashlytics Gradle plugin uploads the mapping file
-# automatically during release builds. Do NOT add
-# -dontobfuscate (it defeats the point of R8), and do not
-# skip the mapping upload step.
+# REMOVED — Firebase not used in this app
+# -keepattributes SourceFile,LineNumberTable
+# -keep public class * extends java.lang.Exception
 
 # ─── AndroidX / Support Library ──────────────────────────────
 -keep class androidx.** { *; }

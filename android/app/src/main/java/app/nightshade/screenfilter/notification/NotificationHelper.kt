@@ -1,4 +1,4 @@
-package com.screenfilterapp.notification
+package app.nightshade.screenfilter.notification
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -8,9 +8,9 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
-import com.screenfilterapp.MainActivity
-import com.screenfilterapp.R
-import com.screenfilterapp.overlay.OverlayService
+import app.nightshade.screenfilter.MainActivity
+import app.nightshade.screenfilter.R
+import app.nightshade.screenfilter.overlay.OverlayService
 
 /**
  * Helper class for managing the persistent notification for the overlay service.

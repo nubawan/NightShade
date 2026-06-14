@@ -1,12 +1,12 @@
-package com.screenfilterapp.receiver
+package app.nightshade.screenfilter.receiver
 
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.util.Log
-import com.screenfilterapp.overlay.OverlayService
-import com.screenfilterapp.overlay.FloatingBubbleService
+import app.nightshade.screenfilter.overlay.OverlayService
+import app.nightshade.screenfilter.overlay.FloatingBubbleService
 
 /**
  * NightShade V4 — Boot Receiver

@@ -1,4 +1,4 @@
-package com.screenfilterapp
+package app.nightshade.screenfilter
 
 import android.content.Context
 import androidx.appcompat.app.AppCompatDelegate

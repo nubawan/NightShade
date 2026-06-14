@@ -1,4 +1,4 @@
-package com.screenfilterapp.overlay
+package app.nightshade.screenfilter.overlay
 
 import android.app.*
 import android.content.BroadcastReceiver
@@ -14,8 +14,8 @@ import android.view.Gravity
 import android.view.WindowManager
 import android.view.View
 import androidx.core.app.NotificationCompat
-import com.screenfilterapp.MainActivity
-import com.screenfilterapp.R
+import app.nightshade.screenfilter.MainActivity
+import app.nightshade.screenfilter.R
 
 /**
  * NightShade V5 — Foreground Overlay Service
@@ -35,21 +35,21 @@ class OverlayService : Service() {
         const val CHANNEL_NAME = "NightShade Filter"
         const val NOTIFICATION_ID = 1001
 
-        const val ACTION_ENABLE = "com.screenfilterapp.ENABLE"
-        const val ACTION_DISABLE = "com.screenfilterapp.DISABLE"
-        const val ACTION_TOGGLE = "com.screenfilterapp.TOGGLE"
-        const val ACTION_PAUSE = "com.screenfilterapp.PAUSE"
-        const val ACTION_RESUME = "com.screenfilterapp.RESUME"
-        const val ACTION_UPDATE = "com.screenfilterapp.UPDATE"
-        const val ACTION_BRIGHTNESS_UP = "com.screenfilterapp.BRIGHTNESS_UP"
-        const val ACTION_BRIGHTNESS_DOWN = "com.screenfilterapp.BRIGHTNESS_DOWN"
-        const val ACTION_SET_BRIGHTNESS = "com.screenfilterapp.SET_BRIGHTNESS"
-        const val ACTION_EMERGENCY_RESET = "com.screenfilterapp.EMERGENCY_RESET"
+        const val ACTION_ENABLE = "app.nightshade.screenfilter.ENABLE"
+        const val ACTION_DISABLE = "app.nightshade.screenfilter.DISABLE"
+        const val ACTION_TOGGLE = "app.nightshade.screenfilter.TOGGLE"
+        const val ACTION_PAUSE = "app.nightshade.screenfilter.PAUSE"
+        const val ACTION_RESUME = "app.nightshade.screenfilter.RESUME"
+        const val ACTION_UPDATE = "app.nightshade.screenfilter.UPDATE"
+        const val ACTION_BRIGHTNESS_UP = "app.nightshade.screenfilter.BRIGHTNESS_UP"
+        const val ACTION_BRIGHTNESS_DOWN = "app.nightshade.screenfilter.BRIGHTNESS_DOWN"
+        const val ACTION_SET_BRIGHTNESS = "app.nightshade.screenfilter.SET_BRIGHTNESS"
+        const val ACTION_EMERGENCY_RESET = "app.nightshade.screenfilter.EMERGENCY_RESET"
 
         // Notification step actions — replaces broken SeekBar RemoteViews on Android 13+
-        const val ACTION_OPACITY_DOWN = "com.screenfilterapp.OPACITY_DOWN"
-        const val ACTION_OPACITY_UP = "com.screenfilterapp.OPACITY_UP"
-        const val ACTION_NOTIF_TOGGLE = "com.screenfilterapp.NOTIF_TOGGLE"
+        const val ACTION_OPACITY_DOWN = "app.nightshade.screenfilter.OPACITY_DOWN"
+        const val ACTION_OPACITY_UP = "app.nightshade.screenfilter.OPACITY_UP"
+        const val ACTION_NOTIF_TOGGLE = "app.nightshade.screenfilter.NOTIF_TOGGLE"
         const val EXTRA_OPACITY_DELTA = "opacity_delta"
 
         const val EXTRA_OPACITY = "opacity"
@@ -427,14 +427,14 @@ class OverlayService : Service() {
         notificationReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
                 when (intent?.action) {
-                    "com.screenfilterapp.NOTIF_BRIGHTNESS" -> {
+                    "app.nightshade.screenfilter.NOTIF_BRIGHTNESS" -> {
                         val level = intent.getFloatExtra(EXTRA_OPACITY, currentOpacity)
                         currentOpacity = level.coerceIn(0f, MAX_SAFE_OPACITY)
                         if (isOverlayVisible) debouncedUpdateOverlay()
                         saveState()
                         refreshNotification()
                     }
-                    "com.screenfilterapp.NOTIF_TOGGLE" -> {
+                    "app.nightshade.screenfilter.NOTIF_TOGGLE" -> {
                         if (isOverlayVisible && !isPaused) {
                             currentEnabled = false
                             hideOverlay()
@@ -449,8 +449,8 @@ class OverlayService : Service() {
             }
         }
         val filter = IntentFilter().apply {
-            addAction("com.screenfilterapp.NOTIF_BRIGHTNESS")
-            addAction("com.screenfilterapp.NOTIF_TOGGLE")
+            addAction("app.nightshade.screenfilter.NOTIF_BRIGHTNESS")
+            addAction("app.nightshade.screenfilter.NOTIF_TOGGLE")
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(notificationReceiver, filter, Context.RECEIVER_NOT_EXPORTED)

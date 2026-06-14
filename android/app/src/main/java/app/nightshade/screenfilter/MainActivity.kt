@@ -1,4 +1,4 @@
-package com.screenfilterapp
+package app.nightshade.screenfilter
 
 import android.content.Context
 import android.os.Build
@@ -14,7 +14,7 @@ import com.facebook.react.defaults.DefaultReactActivityDelegate
 
 class MainActivity : ReactActivity() {
 
-  override fun getMainComponentName(): String = "ScreenFilterApp"
+  override fun getMainComponentName(): String = "NightShade"
 
   override fun onCreate(savedInstanceState: android.os.Bundle?) {
     // ⚠️ MUST be before super.onCreate() — theme is resolved here.

@@ -1,4 +1,4 @@
-package com.screenfilterapp.overlay
+package app.nightshade.screenfilter.overlay
 
 import android.content.Context
 import android.graphics.Canvas

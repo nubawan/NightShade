@@ -1,4 +1,4 @@
-package com.screenfilterapp.overlay
+package app.nightshade.screenfilter.overlay
 
 import android.annotation.SuppressLint
 import android.app.Notification
@@ -23,8 +23,8 @@ import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.TextView
 import androidx.core.app.NotificationCompat
-import com.screenfilterapp.MainActivity
-import com.screenfilterapp.R
+import app.nightshade.screenfilter.MainActivity
+import app.nightshade.screenfilter.R
 
 /**
  * NightShade V5 — Floating Bubble Service
@@ -43,9 +43,9 @@ import com.screenfilterapp.R
 class FloatingBubbleService : Service() {
 
     companion object {
-        const val ACTION_SHOW = "com.screenfilterapp.BUBBLE_SHOW"
-        const val ACTION_HIDE = "com.screenfilterapp.BUBBLE_HIDE"
-        const val ACTION_STOP = "com.screenfilterapp.BUBBLE_STOP"
+        const val ACTION_SHOW = "app.nightshade.screenfilter.BUBBLE_SHOW"
+        const val ACTION_HIDE = "app.nightshade.screenfilter.BUBBLE_HIDE"
+        const val ACTION_STOP = "app.nightshade.screenfilter.BUBBLE_STOP"
         const val CHANNEL_ID = "bubble_service_channel"
         const val NOTIF_ID = 2001
 
@@ -535,6 +535,6 @@ class FloatingBubbleService : Service() {
     }
 
     private fun broadcastPermissionMissing() {
-        sendBroadcast(Intent("com.screenfilterapp.ACTION_OVERLAY_PERMISSION_MISSING"))
+        sendBroadcast(Intent("app.nightshade.screenfilter.ACTION_OVERLAY_PERMISSION_MISSING"))
     }
 }

@@ -1,4 +1,4 @@
-package com.screenfilterapp.overlay
+package app.nightshade.screenfilter.overlay
 
 import android.content.Intent
 import android.net.Uri
@@ -295,7 +295,7 @@ class OverlayModule(reactContext: ReactApplicationContext) :
     @ReactMethod
     fun updateTileState(enabled: Boolean, promise: Promise) {
         try {
-            val intent = Intent("com.screenfilterapp.TILE_UPDATE").apply {
+            val intent = Intent("app.nightshade.screenfilter.TILE_UPDATE").apply {
                 putExtra("enabled", enabled)
                 setPackage(reactApplicationContext.packageName)
             }

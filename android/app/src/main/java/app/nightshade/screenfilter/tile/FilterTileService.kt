@@ -1,10 +1,10 @@
-package com.screenfilterapp.tile
+package app.nightshade.screenfilter.tile
 
 import android.content.Intent
 import android.os.Build
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
-import com.screenfilterapp.overlay.OverlayService
+import app.nightshade.screenfilter.overlay.OverlayService
 
 /**
  * Quick Settings Tile for Android 7.0+.

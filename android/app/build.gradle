@@ -1,8 +1,9 @@
 apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
-apply plugin: "com.google.gms.google-services"
-apply plugin: "com.google.firebase.crashlytics"
+// Firebase removed — not needed for offline-only app
+// apply plugin: "com.google.gms.google-services"
+// apply plugin: "com.google.firebase.crashlytics"
 
 react {
     autolinkLibrariesWithApp()
@@ -25,13 +26,13 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace "com.screenfilterapp"
+    namespace "app.nightshade.screenfilter"
     defaultConfig {
-        applicationId "com.screenfilterapp"
+        applicationId "app.nightshade.screenfilter"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 5
-        versionName "3.2.0"
+        versionCode 1
+        versionName "1.0.0"
     }
 
     // Moved from AndroidManifest.xml — AGP 8.x requires this in build.gradle
